@@ -1,8 +1,6 @@
 被修改的exe部分:
 	;0048CB06
 	00429276
-
-
 区段:.BUF	(00526000)
 	ins跳转表	00526000-00526500;给dll写入
 	{
@@ -20,11 +18,8 @@
 	
 	缓存区		00526600-00526FFC;暂定
 
-	
-	
 区段:.TXT	(00525000)	;包涵写入dll不方便的语句
 00525000	SWITCH		增强的INS_Switch功能
-
 
 dll:INS_PLUS.dll
 
@@ -35,7 +30,6 @@ dll:INS_PLUS.dll
 	2400系:单位调控
 	2500系:弹幕调控&图形处理
 	2600系:
-
 2000:
 ~	2000 int n=1:
 		castArgumentInStackToInt()	cstArgStS
