@@ -10,6 +10,8 @@ struct Shape;
 struct Mask;
 extern Shape shapes[16];
 extern Mask masks[16];
+std::tuple<int, float, float, float> getRoot3(float a, float b, float c, float d);
+std::pair<int, float> getRootBzLine(float ex1, float ey1, float ex2, float ey2, float ax, float bx, float cx, float dx, float ay, float by, float cy, float dy);
 
 float inline smp(float x0, float x1, float xm,std::function<float(float)> F)
 {

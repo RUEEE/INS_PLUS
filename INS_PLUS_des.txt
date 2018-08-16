@@ -427,6 +427,18 @@ dll:INS_PLUS.dll
 		setDanmakuDynamicID()	setDmDnmcID
 		修改b遮罩内标号n的弹幕的标号为m
 	
+	2537 int b,int n,int m,int r
+		setOutwardDanmakuDynamicID()	setOtwdDmDnmcID
+		修改b遮罩内标号为n且按照当前速度将要在下一帧出遮罩的弹幕的ID为m,变换序号为r,如果m或r==-1则不调整相应属性
+	2538 int b,int n,int m,int r
+		setThroughDanmakuDynamicID()	setThrDmDnmcID
+		修改b遮罩内标号为n且按照当前速度将要在下一帧进或出遮罩的弹幕的ID为m,变换序号为r,如果m或r==-1则不调整相应属性
+	2539 int b,int n,int m,int r
+		reflectInsideDanmaku()	refInsdDm
+		让在遮罩内部将要撞上遮罩的标号为n的弹幕的轨迹反弹并修改id为m
+	2540 int b,int n,int m,int r
+		reflectHitDanmaku()	refHitDm
+		让将要撞上遮罩的标号为n的弹幕的轨迹反弹并修改id为m并将弹幕的变换序号调为r,如果m或r==-1则不进行调整相应属性
 	
 	
 	

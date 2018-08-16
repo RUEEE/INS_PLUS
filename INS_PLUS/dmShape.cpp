@@ -140,6 +140,14 @@ void Shape::transBz()
 	float xa, xb, xc, xd, ya, yb, yc, yd, del, m1, m2, a, b;
 	for (int i = 0; i < n; i++)
 	{
+		/*
+		cx = 3 * ( x1 - x0 )
+		bx = 3 * ( x2 - x1 ) - cx
+		ax = x3 - x0 - cx - bx
+		cy = 3 * ( y1 - y0 )
+		by = 3 * ( y2 - y1 ) - cy
+		ay = y3 - y0 - cy - by
+		*/
 		int j = i + 1; if (j == n)j = 0;
 		pt0 = std::get<0>(ptsBz[i]);
 		pt1 = std::get<2>(ptsBz[i]);
@@ -234,3 +242,128 @@ void Shape::transBz()
 	isTransed = 1;
 }
 
+std::tuple<int, float, float, float> getRoot3(float a, float b, float c, float d)
+{
+	using namespace std;
+	float A, B, C, del, eax, ecx, edx;
+	if (a == 0)//2 Order
+	{
+		del = c * c - 4 * b*d;
+		if (del<0)
+			return make_tuple(0, 0, 0, 0);
+		if (del == 0)
+			return make_tuple(1, -c / (2 * b), 0, 0);
+		del = sqrtf(del);
+		return make_tuple(2, (-c + del) / (2 * b), (-c - del) / (2 * b), 0);
+	}
+	A = b * b - 3 * a*c;
+	B = b * c - 9 * a*d;
+	C = c * c - 3 * b*d;
+	if (A == 0 && B == 0)
+		return make_tuple(1, -b / (3 * a), 0, 0);
+	del = B * B - 4 * A*C;
+	if (del>0)
+	{
+		ecx = powf(A*b + 3 * a*((-B + sqrtf(del)) / 2), 1.0f / 3.0f);
+		edx = powf(A*b + 3 * a*((-B - sqrtf(del)) / 2), 1.0f / 3.0f);
+		return make_tuple(1, (-b - ecx - edx) / (3 * a), 0, 0);
+	}
+	if (del == 0)
+	{
+		ecx = B / A;
+		return make_tuple(2, (-b / a) + ecx, -ecx / 2, 0);
+	}
+	//if(del<0)
+	edx = (2 * A*b - 3 * a*B) / (2 * sqrtf(A)*A);
+	ecx = acosf(edx) / 3;
+	edx = 1.732051f*sinf(ecx);
+	return make_tuple(3,
+		(-b - 2 * sqrtf(A)*cosf(ecx)) / (3 * a),
+		(-b + sqrtf(A)*(cosf(ecx) + edx)) / (3 * a),
+		(-b + sqrtf(A)*(cosf(ecx) - edx)) / (3 * a)
+	);
+}
+
+
+std::pair<int, float> getRootBzLine(float ex1, float ey1, float ex2, float ey2, float ax, float bx, float cx, float dx, float ay, float by, float cy, float dy)
+{
+	using namespace std;
+	float A, B, C, D, lA, lB, lC;
+	lA = ey2 - ey1;
+	lB = ex1 - ex2;
+	lC = -ex1 * (ey2 - ey1) + ey1 * (ex2 - ex1);
+	A = ax * lA + ay * lB;
+	B = bx * lA + by * lB;
+	C = cx * lA + cy * lB;
+	D = dx * lA + dy * lB + lC;
+	//equa Ax^3+Bx^2+Cx+D=0
+	int i;
+	float x1, x2, x3;
+	tie(i, x1, x2, x3) = getRoot3(A, B, C, D);
+	switch (i)
+	{
+	case 2:
+	case 3:
+	chooseI2:
+		if (x1 - 1 <= EPS && x1 >= -EPS)//x1 in Bz
+		{
+			A = ax * x1*x1*x1 + bx * x1*x1 + cx * x1 + dx;
+			B = ay * x1*x1*x1 + by * x1*x1 + cy * x1 + dy;
+			A = (A - ex1) / (ex2 - ex1);
+			B = (B - ey1) / (ey2 - ey1);
+			if ((A - 1 <= EPS && A >= -EPS) || (B - 1 <= EPS && B >= -EPS))
+			{
+			chooseI32://~x1,?x2,??x3
+				if (x2 - 1 <= EPS && x2 >= -EPS)//x2 in Bz
+				{
+					C = ax * x2*x2*x2 + bx * x2*x2 + cx * x2 + dx;
+					D = ay * x2*x2*x2 + by * x2*x2 + cy * x2 + dy;
+					C = (C - ex1) / (ex2 - ex1);
+					D = (D - ey1) / (ey2 - ey1);
+					if ((C - 1 <= EPS && C >= -EPS) || (D - 1 <= EPS && D >= -EPS))
+					{
+						//~x1,~x2,??x3
+						//x1:(~A,~B),x2:(~C,~D)
+						if (A>C || B>D)//x1>x2
+							x1 = x2;	//!x1,~x2,??x3
+						if (i == 3)
+						{
+							i--;
+							x2 = x3;
+							goto chooseI32;
+						}
+						return make_pair(1, x1);
+					}
+				}//~x1,!x2,??x3
+				if (i == 3)
+				{
+					i--;
+					x2 = x3;
+					goto chooseI32;
+				}
+				return make_pair(1, x1);
+			}
+		}
+		if (i == 3)//!x1,?x2,?x3
+		{
+			i--;
+			x1 = x3;
+			goto chooseI2;
+		}
+		x1 = x2;//!x1,?x2,!x3
+		i--;
+	case 1:
+		if (x1 - 1 <= EPS && x1 >= -EPS)//in Bz
+		{
+			A = ax * x1*x1*x1 + bx * x1*x1 + cx * x1 + dx;
+			B = ay * x1*x1*x1 + by * x1*x1 + cy * x1 + dy;
+			A = (A - ex1) / (ex2 - ex1);
+			B = (B - ey1) / (ey2 - ey1);
+			if ((A - 1 <= EPS && A >= -EPS) || (B - 1 <= EPS && B >= -EPS))//in line
+				return make_pair(1, x1);
+		}
+	case 0:
+		return make_pair(0, 0);
+
+	}
+}
