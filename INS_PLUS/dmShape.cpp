@@ -61,6 +61,10 @@ bool Shape::isInside(float a, float b)
 			//报错
 			MessageBox(NULL, _T("错误:路径至少需要3个点"), _T("来自INS_PLUS.dll"), MB_OK);
 		}
+		if (x>sx || y>sy || x<mx || y<my)//在包围体外部
+		{
+			return 0;
+		}
 		for (int i = 0,j=0; i < n; i++)
 		{
 			float x1 = pts[i].first,y1=pts[i].second;
@@ -83,6 +87,10 @@ bool Shape::isInside(float a, float b)
 		if (isTransed == 0)
 		{
 			this->transBz();
+		}
+		if (x>sx || y>sy || x<mx || y<my)//在包围体外部
+		{
+			return 0;
 		}
 		float a, b, c, d, m, n, o, p;
 		//贝塞尔曲线的角度的微分
@@ -129,7 +137,7 @@ void Shape::transBz()
 		MessageBox(NULL, _T("错误:贝塞尔曲线数据太少"), _T("来自INS_PLUS.dll"), MB_OK);
 	}
 	std::pair<float, float> pt0, pt1, pt2,pt3;
-	float xa, xb, xc, xd,ya,yb,yc,yd;
+	float xa, xb, xc, xd, ya, yb, yc, yd, del, m1, m2, a, b;
 	for (int i = 0; i < n; i++)
 	{
 		int j = i + 1; if (j == n)j = 0;
@@ -146,6 +154,82 @@ void Shape::transBz()
 		yb = 3 * (pt2.second - pt1.second) - yc;
 		ya = pt3.second - pt0.second - yc - yb;
 		funcsBz.push_back(std::make_tuple(xa, xb, xc, xd, ya, yb, yc, yd));
+		//x=f(n)=xa t^3+xb t^2+xc t+xd
+		//y=g(n)=ya t^3+yb t^2+yc t+yd
+		//t in [0,1]
+		//f'(n)=(3*xa)t^2+(2*xb)t+xc
+		//g'(n)=(3*ya)t^2+(2*yb)t+yc
+		a = 6 * xa; b = 2 * xb;
+		del = b * b - 2 * a*xc;//delta=b^2-4ac
+		if (del >= 0)//delta>0,不使用精度EPS
+		{
+			del = sqrtf(del);
+			m1 = (-b + del) / a;
+			m2 = (-b - del) / a;
+			//获得取得最值的t
+			if (m1 >= 0 && m1 <= 1)
+			{
+				m1 = xa * m1*m1*m1 + xb * m1*m1 + xc * m1 + xd;
+				if (m1 < mx)
+					mx = m1;
+				else if (m1 > sx)
+					sx = m1;
+			}
+			if (m2 >= 0 && m2 <= 1)
+			{
+				m2 = xa * m2*m2*m2 + xb * m2*m2 + xc * m2 + xd;
+				if (m2 < mx)
+					mx = m2;
+				else if (m2 > sx)
+					sx = m2;
+			}
+			//获得并输入两个最值
+		}
+		m1 = xa + xb + xc + xd;//t=1时
+		m2 = xd;//t=0时
+		if (m2 < mx)
+			mx = m2;
+		else if (m2 > sx)
+			sx = m2;
+		if (m1 < mx)
+			mx = m1;
+		else if (m1 > sx)
+			sx = m1;
+		//然后是y的判定>>>>>>>>>>>>>>>>>>>
+		a = 6 * ya; b = 2 * yb;
+		del = b * b - 2 * a*yc;
+		if (del >= 0)
+		{
+			del = sqrtf(del);
+			m1 = (-b + del) / a;
+			m2 = (-b - del) / a;
+			if (m1 >= 0 && m1 <= 1)
+			{
+				m1 = ya * m1*m1*m1 + yb * m1*m1 + yc * m1 + yd;
+				if (m1 < my)
+					my = m1;
+				else if (m1 > sy)
+					sy = m1;
+			}
+			if (m2 >= 0 && m2 <= 1)
+			{
+				m2 = ya * m2*m2*m2 + yb * m2*m2 + yc * m2 +yd;
+				if (m2 < my)
+					my = m2;
+				else if (m2 > sy)
+					sy = m2;
+			}
+		}
+		m1 = ya + yb + yc + yd;
+		m2 = yd;
+		if (m2 < my)
+			my = m2;
+		else if (m2 > sy)
+			my = m2;
+		if (m1 < my)
+			my = m1;
+		else if (m1 > sy)
+			sy = m1;
 	}
 	isTransed = 1;
 }

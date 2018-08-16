@@ -28,9 +28,10 @@ struct Shape
 	float x,y;//shape的坐标
 	float ix, iy, jx, jy;//shape图形的变换
 	float ixN, iyN, jxN, jyN;//shape图形的逆
-	float sx, sy;//shape的大小
+	float sx, sy;//shape的大小,如果样式为多边形则存储大坐标
+	float mx, my;//存储最小坐标
 	Shape() { init(); }
-	void init() { type = 0; x = y = iy = jx = 0; ix = jy = sx = sy = 1; transN(); pts.clear(); ptsBz.clear(); isTransed = 0; funcsBz.clear(); }
+	void init() { type = 0; x = y = iy = jx = 0; ix = jy = sx = sy = 1; transN(); pts.clear(); ptsBz.clear(); isTransed = 0; funcsBz.clear(); mx=my = 0; }
 	void inline move(float mx, float my) { x = mx; y = my; }
 	void transN()
 	{
@@ -38,7 +39,7 @@ struct Shape
 		if (fabs(w)<EPS)
 		{
 			//报错
-			MessageBox(NULL, _T("shape的行列式错误,遭到降维打击"), _T("来自INS_PLUS.dll"), MB_OK);
+			MessageBox(NULL, _T("shape的行列式错误,遭到降维打击("), _T("来自INS_PLUS.dll"), MB_OK);
 			w = 1;
 		}
 		w = 1 / w;
@@ -293,7 +294,25 @@ void inline INS_2515(DWORD ptNowObj)
 		MessageBox(NULL, _T("给错误的图形增加路径点"), _T("来自INS_PLUS.dll"), MB_OK);
 		return;
 	}
-	shapes[w].pts.push_back(std::make_pair(autoGetArgFloatB(ptNowObj,1), autoGetArgFloatB(ptNowObj, 2)));
+	float x= autoGetArgFloatB(ptNowObj, 1), y= autoGetArgFloatB(ptNowObj, 2);
+	shapes[w].pts.push_back(std::make_pair(x,y));//录入点的坐标
+	if (x> shapes[w].sx)
+	{
+		shapes[w].sx = x;
+	}
+	else if (x < shapes[w].mx)
+	{
+		shapes[w].mx = x;
+	}
+	if (y > shapes[w].sy)
+	{
+		shapes[w].sy = y;
+	}
+	else if (y < shapes[w].my)
+	{
+		shapes[w].my = y;
+	}
+	//将图形作为包围体储存
 }
 
 void inline INS_2516(DWORD ptNowObj)
