@@ -45,7 +45,9 @@ void inline INS_2533(DWORD ptNowObj);
 void inline INS_2534(DWORD ptNowObj);
 void inline INS_2535(DWORD ptNowObj);
 void inline INS_2536(DWORD ptNowObj);
-
+void inline INS_2537(DWORD ptNowObj);
+void inline INS_2538(DWORD ptNowObj);
+void inline INS_2539(DWORD ptNowObj);
 
 void inline INS_2530(DWORD ptNowObj){
 	int b=autoGetArgIntB(ptNowObj,0), n= autoGetArgIntB(ptNowObj, 1), t= autoGetArgIntB(ptNowObj, 2),w = autoGetArgIntB(ptNowObj, 3);
@@ -417,4 +419,239 @@ void inline INS_2418(DWORD ptNowObj)
 	*(int*)pt = msg.size();
 	*(BYTE*)(pt - 4) = 'i';
 	autoSubESP(ptNowObj, -1);
+}
+
+void inline INS_2537(DWORD ptNowObj)
+{
+	int B = autoGetArgIntB(ptNowObj, 0);
+	int N = autoGetArgIntB(ptNowObj, 1);
+	int M = autoGetArgIntB(ptNowObj, 2);
+	int R = autoGetArgIntB(ptNowObj, 3);
+	std::function<void(DWORD)> F = [=](int ptDm)
+	{
+		float x,y;
+		if (*(int*)(ptDm + 0xCB8) == N && masks[B].isInsideA(x = *(float*)(ptDm + 0xC38), y = *(float*)(ptDm + 0xC3C) ))
+		{
+			x += *(float*)(ptDm + 0xC44);
+			y += *(float*)(ptDm + 0xC48);
+			if (!masks[B].isInsideA(x, y))
+			{
+				if(M!=-1)
+					*(int*)(ptDm + 0xCB8) = M;
+				if(R!=-1)
+					*(int*)(ptDm + 0xC9C) = R;
+			}
+			
+		}
+	};
+	forEachDm(F);
+}
+
+void inline INS_2538(DWORD ptNowObj)
+{
+	int B = autoGetArgIntB(ptNowObj, 0);
+	int N = autoGetArgIntB(ptNowObj, 1);
+	int M = autoGetArgIntB(ptNowObj, 2);
+	int R = autoGetArgIntB(ptNowObj, 3);
+	std::function<void(DWORD)> F = [=](int ptDm)
+	{
+		float x, y;
+		if (*(int*)(ptDm + 0xCB8) == N && masks[B].isInsideA(x = *(float*)(ptDm + 0xC38), y = *(float*)(ptDm + 0xC3C)))
+		{
+			x += *(float*)(ptDm + 0xC44);
+			y += *(float*)(ptDm + 0xC48);
+			if (!masks[B].isInsideA(x, y))
+			{
+				if (M != -1)
+					*(int*)(ptDm + 0xCB8) = M;
+				if (R != -1)
+					*(int*)(ptDm + 0xC9C) = R;
+			}
+		}else{
+			x += *(float*)(ptDm + 0xC44);
+			y += *(float*)(ptDm + 0xC48);
+			if (masks[B].isInsideA(x, y))
+			{
+				if (M != -1)
+					*(int*)(ptDm + 0xCB8) = M;
+				if (R != -1)
+					*(int*)(ptDm + 0xC9C) = R;
+			}
+		}
+	};
+	forEachDm(F);
+}
+
+void inline INS_2539(DWORD ptNowObj)
+{
+	int B = autoGetArgIntB(ptNowObj, 0);
+	int N = autoGetArgIntB(ptNowObj, 1);
+	int M = autoGetArgIntB(ptNowObj, 2);
+	int R = autoGetArgIntB(ptNowObj, 3);
+	if (shapes[B].type == 2 && shapes[B].pts.size() < 3)
+	{
+		MessageBox(NULL, _T("错误:点太少"), _T("来自INS_PLUS.dll"), MB_OK);
+		//报错
+	}else if (shapes[B].type == 3 && shapes[B].ptsBz.size() < 2)
+	{
+		MessageBox(NULL, _T("错误:贝塞尔点太少"), _T("来自INS_PLUS.dll"), MB_OK);
+		//报错
+	}
+	if (shapes[B].type == 3 && shapes[B].isTransed==0){
+		shapes[B].transBz();//事先转换
+	}
+
+	std::function<void(DWORD)> F = [=](int ptDm)
+	{
+		float x, y;
+		if (*(int*)(ptDm + 0xCB8) == N && shapes[B].isInsideA(x = *(float*)(ptDm + 0xC38), y = *(float*)(ptDm + 0xC3C)))
+		{
+			float vx, vy;
+			vx=*(float*)(ptDm + 0xC44);
+			vy=*(float*)(ptDm + 0xC48);
+			if (!shapes[B].isInsideA(x+vx, y+vy))
+			{
+				float dx,dy,sx,sy,rtx,bx,by;
+				bx = vx; by = vy;
+				sx = shapes[B].x; sy = shapes[B].y;
+				auto p = shapes[B].transOthPtN(x-sx, y-sy);
+				x = p.first; y = p.second;
+				p = shapes[B].transOthPtN(vx, vy);
+				vx = p.first; vy = p.second;
+				//将线段置换入坐标轴
+				switch (shapes[B].type)
+				{
+				case 0://圆
+					{
+						auto root = getRoot3(0,vx*vx+vy*vy,2*vx*x+2*y*vy,x*x+y*y-shapes[B].sx*shapes[B].sx);
+						//求解圆与直线的交点
+						switch (std::get<0>(root))
+						{
+						case 2:
+							//如果x1不合法或x2合法且比x1合适
+							if (std::get<1>(root) < -EPS || (std::get<2>(root)>=-EPS && std::get<2>(root)-1<=EPS && std::get<2>(root) < std::get<1>(root)) )
+								rtx = std::get<2>(root);
+							else
+								rtx = std::get<1>(root);
+							break;
+						case 1:
+							rtx = std::get<1>(root);
+							break;
+						default:
+							//报错
+							return;
+						}
+						dx = rtx * vy + y; dy = -rtx * vx + x;//获得斜率的向量
+					}
+					break;
+				case 1://方
+					{
+						float re=2, esi, edi;
+						esi = shapes[B].sx; edi = shapes[B].sy;
+						std::tuple<int,float,float> root;
+
+						root= getLineCrossOverPoint(x, y, vx, vy, -esi, -edi, 2 * esi, 0);//上
+						if (std::get<0>(root) == 1 && re > std::get<1>(root))
+						{
+							re = std::get<1>(root); dx = 1; dy = 0;
+						}
+						root = getLineCrossOverPoint(x, y, vx, vy, -esi, edi, 2 * esi, 0);//下
+						if (std::get<0>(root) == 1 && re > std::get<1>(root))
+						{
+							re = std::get<1>(root); dx = 1; dy = 0;
+						}
+						root = getLineCrossOverPoint(x, y, vx, vy, -esi, -edi, 0, 2* edi);//左
+						if (std::get<0>(root) == 1 && re > std::get<1>(root))
+						{
+							re = std::get<1>(root); dx = 0;  dy = 1;
+						}
+						root = getLineCrossOverPoint(x, y, vx, vy, esi, -edi, 0, 2* edi);//右
+						if (std::get<0>(root) == 1 && re > std::get<1>(root))
+						{
+							re = std::get<1>(root); dx = 0; dy = 1;
+						}
+					}
+					break;
+				case 2://多个线段
+					{
+						int n = shapes[B].pts.size(),tn=-1,sn=-1;
+						float rt=2;
+						float lx, ly, lvx, lvy;
+						std::tuple<int, float, float> root;
+						int i,j;
+						for (i = 0,j=1; i < n; ++i,++j)
+						{
+							if (j == n)
+								j = 0;
+							lx = shapes[B].pts[i].first;
+							ly = shapes[B].pts[i].second;
+							lvx = shapes[B].pts[j].first - lx;
+							lvy = shapes[B].pts[j].second - ly;
+							root = getLineCrossOverPoint(x, y, vx, vy, lx, ly, lvx, lvy);
+							if (std::get<0>(root) ==1 && rt > std::get<1>(root))
+							{
+								rt = std::get<1>(root);
+								tn = i;
+								sn = j;
+							}
+						}
+						if (tn == -1)
+							return;
+						dx = shapes[B].pts[sn].first - shapes[B].pts[tn].first;
+						dy = shapes[B].pts[sn].second - shapes[B].pts[tn].second;
+					}
+					break;
+				case 3://贝塞尔曲线
+					{
+						int n = shapes[B].funcsBz.size(),tn=-1;
+						float w=0.0,t,lnd=999999.0f,ld;
+						float Ax, Bx, Cx, Dx, Ay, By, Cy, Dy;
+						float xa,ya;
+						for(int i=0;i<n;i++)
+						{
+							std::tie(Ax, Bx, Cx, Dx, Ay, By, Cy, Dy) = shapes[B].funcsBz[i];
+							auto root = getRootBzLine(x, y, vx, vy, Ax, Bx, Cx, Dx, Ay, By, Cy, Dy);
+							if (root.first != 0)
+							{
+								t = root.second;
+								xa = Ax * t*t*t + Bx * t*t + Cx * t + Dx - x;
+								ya = Ay * t*t*t + By * t*t + Cy * t + Dy - y;
+								ld = ya * ya + xa * xa;//判断哪个距离最近
+								if (ld<lnd)
+								{
+									tn = i;
+									w = t;
+									lnd = ld;
+								}
+							}
+						}
+						//遍历完,有可能没有交点(因为bz的边界判定)
+						if (tn == -1)
+							tn = 1;
+						std::tie(Ax, Bx, Cx, Dx, Ay, By, Cy, Dy) = shapes[B].funcsBz[tn];
+						//求导
+						dx = 3 * Ax*t*t + 2 * Bx*t + Cx;
+						dy = 3 * Ay*t*t + 2 * By*t + Cy;
+					}
+					break;
+				default:
+					dx = dy = 1;
+					return;
+				}
+				p = shapes[B].transOthPt(dx, dy);//让dx,dy变回原来的
+				dx = p.first; dy = p.second;
+				p = reflectLine(dx, dy, bx, by);
+				*(float*)(ptDm + 0xC44) = p.first;
+				*(float*)(ptDm + 0xC48) = p.second;
+				*(float*)(ptDm + 0xC54) = atan2f(p.second, p.first);
+				//和2537一样
+				if (M != -1)
+					*(int*)(ptDm + 0xCB8) = M;
+				if (R != -1)
+					*(int*)(ptDm + 0xC9C) = R;
+			}
+
+		}
+	};
+	forEachDm(F);
 }

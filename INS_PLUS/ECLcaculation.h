@@ -162,7 +162,7 @@ void inline INS_2060(DWORD ptNowObj)
 	float x2 = getFloatArgSt(ptNowObj, -4);
 	autoSubESP(ptNowObj, 3);
 	int pt = (int)getPtrArgSt(ptNowObj, -1);
-	*(int*)pt = (int)(fabs(x1-x2)<=EPS && fabs(y1-y2)<=EPS);
+	*(int*)pt = (int)(fabsf(x1-x2)<=EPS && fabsf(y1-y2)<=EPS);
 	*(BYTE*)(pt - 4) = 'i';
 }
 

@@ -10,8 +10,6 @@ struct Shape;
 struct Mask;
 extern Shape shapes[16];
 extern Mask masks[16];
-std::tuple<int, float, float, float> getRoot3(float a, float b, float c, float d);
-std::pair<int, float> getRootBzLine(float ex1, float ey1, float ex2, float ey2, float ax, float bx, float cx, float dx, float ay, float by, float cy, float dy);
 
 float inline smp(float x0, float x1, float xm,std::function<float(float)> F)
 {
@@ -38,7 +36,7 @@ struct Shape
 	void transN()
 	{
 		float w = ix * jy - jx * iy;
-		if (fabs(w)<EPS)
+		if (fabsf(w)<EPS)
 		{
 			//报错
 			MessageBox(NULL, _T("shape的行列式错误,遭到降维打击("), _T("来自INS_PLUS.dll"), MB_OK);
@@ -72,6 +70,8 @@ struct Shape
 	{
 		return isInside(a - x, b - y);
 	}
+	std::pair<float, float> transOthPt(float X, float Y) { return std::make_pair(ix*X+jx*Y,iy*X+jy*Y); }
+	std::pair<float, float> transOthPtN(float X, float Y) { return std::make_pair(ixN*X + jxN * Y, iyN*X + jyN * Y); }
 };
 
 struct Mask
@@ -134,6 +134,10 @@ struct Mask
 		return isInside(a-x,b-y);
 	}
 };
+std::tuple<int, float, float, float> getRoot3(float a, float b, float c, float d);
+std::pair<int, float> getRootBzLine(float ex1, float ey1, float ex2, float ey2, float ax, float bx, float cx, float dx, float ay, float by, float cy, float dy);
+std::pair<float, float> reflectLine(float dx, float dy, float vx, float vy);
+std::tuple<int, float, float> getLineCrossOverPoint(float x1, float y1, float vx, float vy, float a1, float b1, float a2, float b2);
 
 void inline INS_2500(DWORD ptNowObj); 
 void inline INS_2501(DWORD ptNowObj);
@@ -178,7 +182,13 @@ void inline INS_2501(DWORD ptNowObj){
 		//报错
 		MessageBox(NULL, _T("错误:ins_2501,使用了未知的形状"), _T("来自INS_PLUS.dll"), MB_OK);
 	}
-	shapes[autoGetArgIntB(ptNowObj, 0)].type = t;
+	int w = autoGetArgIntB(ptNowObj, 0);
+	shapes[w].type = t;
+	if (t == 2 || t == 3)
+	{
+		shapes[w].sx = shapes[w].sy = -1000000;
+		shapes[w].mx = shapes[w].my = 1000000;
+	}
 };
 
 void inline INS_2502(DWORD ptNowObj) {
@@ -302,7 +312,7 @@ void inline INS_2515(DWORD ptNowObj)
 	{
 		shapes[w].sx = x;
 	}
-	else if (x < shapes[w].mx)
+	if (x < shapes[w].mx)
 	{
 		shapes[w].mx = x;
 	}
@@ -310,7 +320,7 @@ void inline INS_2515(DWORD ptNowObj)
 	{
 		shapes[w].sy = y;
 	}
-	else if (y < shapes[w].my)
+	if (y < shapes[w].my)
 	{
 		shapes[w].my = y;
 	}
@@ -516,7 +526,6 @@ void inline INS_2524(DWORD ptNowObj)
 		autoSubESP(ptNowObj, -1);
 	}
 }
-
 
 void inline INS_2525(DWORD ptNowObj)
 {

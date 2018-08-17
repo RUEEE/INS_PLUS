@@ -19,7 +19,7 @@ float Asmp(float xl, float xr, std::function<float(float)> F)
 		x2 = (x0 + x1) / 2;
 		L = smp(x0, x2, (x0 + x2) / 2, F);
 		R = smp(x2, x1, (x1 + x2) / 2, F);
-		if (fabs(L + R - T) <= 50 * EPS)
+		if (fabsf(L + R - T) <= 50 * EPS)
 		{
 			res += L + R + (L + R - T) / 50;
 		}
@@ -34,7 +34,7 @@ float Asmp(float xl, float xr, std::function<float(float)> F)
 
 int dcmp(float x)
 {
-	if (fabs(x) <= EPS){return 0;}
+	if (fabsf(x) <= EPS){return 0;}
 	else if (x < 0){return -1;}
 	return 1;
 }
@@ -98,14 +98,7 @@ bool Shape::isInside(float a, float b)
 		float w=0;//绕数
 		for (int i = 0; i < N; i++)
 		{
-			a = std::get<0>(funcsBz[i]);
-			b = std::get<1>(funcsBz[i]);
-			c = std::get<2>(funcsBz[i]);
-			d = std::get<3>(funcsBz[i]);
-			m = std::get<4>(funcsBz[i]);
-			n = std::get<5>(funcsBz[i]);
-			o = std::get<6>(funcsBz[i]);
-			p = std::get<7>(funcsBz[i]);
+			std::tie(a, b, c, d, m, n, o, p) = funcsBz[i];
 			std::function<float(float)> F = [a, b, c, d, m, n, o, p, x, y](float t)
 			{
 				float xt = a * t * t * t + b * t * t + c * t + d;
@@ -285,13 +278,14 @@ std::tuple<int, float, float, float> getRoot3(float a, float b, float c, float d
 }
 
 
+#define EPS2 0.1
 std::pair<int, float> getRootBzLine(float ex1, float ey1, float ex2, float ey2, float ax, float bx, float cx, float dx, float ay, float by, float cy, float dy)
 {
 	using namespace std;
 	float A, B, C, D, lA, lB, lC;
-	lA = ey2 - ey1;
-	lB = ex1 - ex2;
-	lC = -ex1 * (ey2 - ey1) + ey1 * (ex2 - ex1);
+	lA = ey2;
+	lB = ex2;
+	lC = -ex1 * ey2 + ey1 * ex2;//修正成(ex2,ey2)*t+(ex1,ey1)的形式
 	A = ax * lA + ay * lB;
 	B = bx * lA + by * lB;
 	C = cx * lA + cy * lB;
@@ -305,22 +299,22 @@ std::pair<int, float> getRootBzLine(float ex1, float ey1, float ex2, float ey2, 
 	case 2:
 	case 3:
 	chooseI2:
-		if (x1 - 1 <= EPS && x1 >= -EPS)//x1 in Bz
+		if (x1 - 1 <= EPS2 && x1 >= -EPS2)//x1 in Bz
 		{
 			A = ax * x1*x1*x1 + bx * x1*x1 + cx * x1 + dx;
 			B = ay * x1*x1*x1 + by * x1*x1 + cy * x1 + dy;
 			A = (A - ex1) / (ex2 - ex1);
 			B = (B - ey1) / (ey2 - ey1);
-			if ((A - 1 <= EPS && A >= -EPS) || (B - 1 <= EPS && B >= -EPS))
+			if ((A - 1 <= EPS2 && A >= -EPS2) || (B - 1 <= EPS2  && B >= -EPS2))
 			{
 			chooseI32://~x1,?x2,??x3
-				if (x2 - 1 <= EPS && x2 >= -EPS)//x2 in Bz
+				if (x2 - 1 <= EPS2 && x2 >= -EPS2)//x2 in Bz
 				{
 					C = ax * x2*x2*x2 + bx * x2*x2 + cx * x2 + dx;
 					D = ay * x2*x2*x2 + by * x2*x2 + cy * x2 + dy;
 					C = (C - ex1) / (ex2 - ex1);
 					D = (D - ey1) / (ey2 - ey1);
-					if ((C - 1 <= EPS && C >= -EPS) || (D - 1 <= EPS && D >= -EPS))
+					if ((C - 1 <= EPS2 && C >= -EPS2) || (D - 1 <= EPS2 && D >= -EPS2))
 					{
 						//~x1,~x2,??x3
 						//x1:(~A,~B),x2:(~C,~D)
@@ -353,17 +347,49 @@ std::pair<int, float> getRootBzLine(float ex1, float ey1, float ex2, float ey2, 
 		x1 = x2;//!x1,?x2,!x3
 		i--;
 	case 1:
-		if (x1 - 1 <= EPS && x1 >= -EPS)//in Bz
+		if (x1 - 1 <= EPS2 && x1 >= -EPS2)//in Bz
 		{
 			A = ax * x1*x1*x1 + bx * x1*x1 + cx * x1 + dx;
 			B = ay * x1*x1*x1 + by * x1*x1 + cy * x1 + dy;
 			A = (A - ex1) / (ex2 - ex1);
 			B = (B - ey1) / (ey2 - ey1);
-			if ((A - 1 <= EPS && A >= -EPS) || (B - 1 <= EPS && B >= -EPS))//in line
+			if ((A - 1 <= EPS2 && A >= -EPS2) || (B - 1 <= EPS2 && B >= -EPS2))//in line
 				return make_pair(1, x1);
 		}
 	case 0:
 		return make_pair(0, 0);
 
 	}
+}
+
+std::pair<float, float> reflectLine(float dx, float dy, float vx, float vy)
+{
+	float lenD2 = dx*dx + dy * dy,lenV2 = vx*vx + vy * vy;
+	float div1MulLen = 1/sqrtf(lenD2*lenV2);
+	float sint,cost,sin2t,cos2t;
+	sint = (vx * dy - vy * dx)*div1MulLen;
+	cost = (vx*dx + vy * dy)*div1MulLen;
+	sin2t = 2 * sint*cost;
+	cos2t = 2 * cost * cost - 1;
+	return std::make_pair(cos2t*vx - sin2t * vy, sin2t*vx + cos2t * vy);
+}
+
+std::tuple<int, float,float> getLineCrossOverPoint(float x1, float y1,float vx,float vy,float a1,float b1,float a2,float b2)
+{
+	float eax;
+	eax = vx * b2 - vy * a2;
+	if(fabsf(eax)<EPS)//线段平行
+	{
+		return std::make_tuple(0, 0.0f,0.0f);
+	}
+	eax = 1 / eax;
+	float u1, u2, t1, t2;
+	u1 = x1 - a1; u2 = y1 - b1;
+	t1 = (a2 * u2 - b2 * u1)*eax;
+	t2 = (vx * u2 - vy * u1)*eax;
+	if (t1 - 1 < EPS && t1 > -EPS && t2 - 1 < EPS && t2 > -EPS)
+	{
+		return std::make_tuple(1, t1, t2);
+	}
+	return std::make_tuple(-1, t1, t2);//直线相交而非线段
 }
