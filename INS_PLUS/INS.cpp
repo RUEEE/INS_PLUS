@@ -273,6 +273,12 @@ int _stdcall INS_Switch(int code, int ptINS, DWORD ptObj,DWORD* _obj)
 		INS_2538(ptObj + 0x10); return 1;
 	case 2539:
 		INS_2539(ptObj + 0x10); return 1;
+	case 2540:
+		INS_2540(ptObj + 0x10); return 1;
+	case 2541:
+		INS_2541(ptObj + 0x10); return 1;
+	case 2542:
+		INS_2542(ptObj + 0x10); return 1;
 	default:
 		return 0;
 	}

@@ -436,25 +436,34 @@ dll:INS_PLUS.dll
 		修改b遮罩内标号为n且按照当前速度将要在下一帧进或出遮罩的弹幕的ID为m,变换序号为r,如果m或r==-1则不调整相应属性
 	
 	;注:39-44全部是shape
-	2539 int b,int n,int m,int r
+~	2539 int b,int n,int m,int r
 		reflectInsideDanmaku()	reflInsdDm
 		让在图形内部将要撞上图形的标号为n的弹幕的速度方向反弹并修改id为m,变换序号为r,如果m或r==-1则不进行调整相应属性
-	2540 int b,int n,int m,int r
+~	2540 int b,int n,int m,int r
+		reflectOutsideDanmaku()	reflOtsdDm
+		让在图形外部将要撞上图形的标号为n的弹幕的速度方向反弹并修改id为m,变换序号为r,如果m或r==-1则不进行调整相应属性
+~	2541 int b,int n,int m,int r
 		reflectHitDanmaku()	reflHitDm
 		让将要撞上图形的标号为n的弹幕的轨迹反弹并修改id为m并将弹幕的变换序号调为r,如果m或r==-1则不进行调整相应属性
-	2541 int b,float x1,float y1,float x2,float y2
+		;在39-41中,41的执行速度最快(快得多)
+~	2542 int b,float x1,float y1,float x2,float y2
 		getReflectedLine()	getReflLn
-		判断(x1,y1)到(x2,y2)这条射线射出的单位点的反弹轨迹,由(x3,y3),(x4,y4)两部分组成,(x3,y3)是射线与mask的交点,(x4,y4)是反射射线上一点,相当于push x4,push y4,push x3,push y3
-		如果该射线与图形不相交,则返回四个0.0f
-	2542 int b,int n,int m,int r,float n1,float n2
+		判断(x1,y1)点出发的(x2,y2)这条向量的反弹轨迹,由(xw,yw,r)两部分组成,作为一个(xw,yw)当作向量指明反弹之后的方向,该向量长度和(x2,y2)相同,r为反弹后方向的弧度值,相当于push xw,push yw,push r
+		如果该射线与图形不相交,则返回两个0.0f
+	
+	2543 int b,int n,int m,int r,float n1,float n2
 		refractInsideDanmaku()	refrInsdDm
 		让图形内部即将出去的标号为n的弹幕的轨迹发生偏折,折射率系数为浮点数,取弹幕0号变换的第1个浮点参数,设为w,w的标准值为1.0f,若w=-999999.0f,则取w=弹幕速度..n1,n2表明光在图形内,图形外的速度状况,n=1代表速度为1倍,n=0.5代表速度0.5倍,以此类推.m,r同上
 		设:入射角θ1,折射角θ2
 		sin(θ1)/sin(θ2)=n2/n1*w
-	2543 int b,int n,int m,int r,float n1,float n2
+	2544 int b,int n,int m,int r,float n1,float n2
+		refractInsideDanmaku()	refrInsdDm
+		让图形外部即将出去的标号为n的弹幕的轨迹发生偏
+	2545 int b,int n,int m,int r,float n1,float n2
 		refractThroughDanmaku()	refrThrDm
 		让穿过图形的弹幕发生折射,区别同39-40
-	2544 int b,float x1,float y1,float x2,float y2,float n1,float n2,float w
+	
+	2546 int b,float x1,float y1,float x2,float y2,float n1,float n2,float w
 		类似2541的计算,但是是折射
 		
 		
