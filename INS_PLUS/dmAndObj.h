@@ -51,6 +51,10 @@ void inline INS_2539(DWORD ptNowObj);
 void inline INS_2540(DWORD ptNowObj);
 void inline INS_2541(DWORD ptNowObj);
 void inline INS_2542(DWORD ptNowObj);
+void inline INS_2543(DWORD ptNowObj);
+void inline INS_2544(DWORD ptNowObj);
+void inline INS_2545(DWORD ptNowObj);
+void inline INS_2546(DWORD ptNowObj);
 
 void inline INS_2530(DWORD ptNowObj){
 	int b=autoGetArgIntB(ptNowObj,0), n= autoGetArgIntB(ptNowObj, 1), t= autoGetArgIntB(ptNowObj, 2),w = autoGetArgIntB(ptNowObj, 3);
@@ -604,7 +608,6 @@ void inline INS_2541(DWORD ptNowObj)
 	forEachDm(F);
 }
 
-
 void inline INS_2542(DWORD ptNowObj)
 {
 	int B = autoGetArgIntB(ptNowObj, 0);
@@ -641,4 +644,164 @@ void inline INS_2542(DWORD ptNowObj)
 	pt -= 8;
 	*(float*)pt = nx;
 	*(BYTE*)(pt - 4) = 'f';
+}
+
+void inline INS_2543(DWORD ptNowObj)
+{
+	int B = autoGetArgIntB(ptNowObj, 0);
+	int N = autoGetArgIntB(ptNowObj, 1);
+	int M = autoGetArgIntB(ptNowObj, 2);
+	int R = autoGetArgIntB(ptNowObj, 3);
+	float nw = autoGetArgFloatB(ptNowObj, 4)/ autoGetArgFloatB(ptNowObj, 5);
+	if (shapes[B].type == 2 && shapes[B].pts.size() < 3)
+	{
+		MessageBox(NULL, _T("错误:点太少"), _T("来自INS_PLUS.dll"), MB_OK);
+		//报错
+	}
+	else if (shapes[B].type == 3 && shapes[B].ptsBz.size() < 2)
+	{
+		MessageBox(NULL, _T("错误:贝塞尔点太少"), _T("来自INS_PLUS.dll"), MB_OK);
+		//报错
+	}
+	if (shapes[B].type == 3 && shapes[B].isTransed == 0) {
+		shapes[B].transBz();//事先转换
+	}
+	std::function<void(DWORD)> F = [=](int ptDm)
+	{
+		float x, y;
+		if (*(int*)(ptDm + 0xCB8) == N && shapes[B].isInsideA(x = *(float*)(ptDm + 0xC38), y = *(float*)(ptDm + 0xC3C)))
+		{
+			float vx, vy;
+			vx = *(float*)(ptDm + 0xC44);
+			vy = *(float*)(ptDm + 0xC48);
+			if (!shapes[B].isInsideA(x + vx, y + vy))
+			{
+				if (*(float*)(ptDm + 0xCA4)!=-999999.0f)
+				{
+					refractDm(B, x, y, vx, vy, *(float*)(ptDm + 0xCA4)*nw, (float*)(ptDm + 0xC44), (float*)(ptDm + 0xC48), (float*)(ptDm + 0xC54));
+				}
+				else
+				{
+					refractDm(B, x, y, vx, vy, *(float*)(ptDm + 0xC50)*nw, (float*)(ptDm + 0xC44), (float*)(ptDm + 0xC48), (float*)(ptDm + 0xC54));
+				}
+				if (M != -1)
+					*(int*)(ptDm + 0xCB8) = M;
+				if (R != -1)
+					*(int*)(ptDm + 0xC9C) = R;
+			}
+		}
+	};
+	forEachDm(F);
+}
+
+void inline INS_2544(DWORD ptNowObj)
+{
+	int B = autoGetArgIntB(ptNowObj, 0);
+	int N = autoGetArgIntB(ptNowObj, 1);
+	int M = autoGetArgIntB(ptNowObj, 2);
+	int R = autoGetArgIntB(ptNowObj, 3);
+	float nw = autoGetArgFloatB(ptNowObj, 5) / autoGetArgFloatB(ptNowObj, 4);
+	if (shapes[B].type == 2 && shapes[B].pts.size() < 3)
+	{
+		MessageBox(NULL, _T("错误:点太少"), _T("来自INS_PLUS.dll"), MB_OK);
+		//报错
+	}
+	else if (shapes[B].type == 3 && shapes[B].ptsBz.size() < 2)
+	{
+		MessageBox(NULL, _T("错误:贝塞尔点太少"), _T("来自INS_PLUS.dll"), MB_OK);
+		//报错
+	}
+	if (shapes[B].type == 3 && shapes[B].isTransed == 0) {
+		shapes[B].transBz();//事先转换
+	}
+	std::function<void(DWORD)> F = [=](int ptDm)
+	{
+		float x, y;
+		if (*(int*)(ptDm + 0xCB8) == N && !shapes[B].isInsideA(x = *(float*)(ptDm + 0xC38), y = *(float*)(ptDm + 0xC3C)))
+		{
+			float vx, vy;
+			vx = *(float*)(ptDm + 0xC44);
+			vy = *(float*)(ptDm + 0xC48);
+			if (shapes[B].isInsideA(x + vx, y + vy))
+			{
+				if (*(float*)(ptDm + 0xCA4) != -999999.0f)
+				{
+					refractDm(B, x, y, vx, vy, *(float*)(ptDm + 0xCA4)/nw, (float*)(ptDm + 0xC44), (float*)(ptDm + 0xC48), (float*)(ptDm + 0xC54));
+				}
+				else
+				{
+					refractDm(B, x, y, vx, vy, *(float*)(ptDm + 0xC50)/nw, (float*)(ptDm + 0xC44), (float*)(ptDm + 0xC48), (float*)(ptDm + 0xC54));
+				}
+				if (M != -1)
+					*(int*)(ptDm + 0xCB8) = M;
+				if (R != -1)
+					*(int*)(ptDm + 0xC9C) = R;
+			}
+		}
+	};
+	forEachDm(F);
+}
+
+
+void inline INS_2545(DWORD ptNowObj)
+{
+	int B = autoGetArgIntB(ptNowObj, 0);
+	int N = autoGetArgIntB(ptNowObj, 1);
+	int M = autoGetArgIntB(ptNowObj, 2);
+	int R = autoGetArgIntB(ptNowObj, 3);
+	float nw = autoGetArgFloatB(ptNowObj, 4) / autoGetArgFloatB(ptNowObj, 5);
+	float mw = autoGetArgFloatB(ptNowObj, 5) / autoGetArgFloatB(ptNowObj, 4);
+	if (shapes[B].type == 2 && shapes[B].pts.size() < 3)
+	{
+		MessageBox(NULL, _T("错误:点太少"), _T("来自INS_PLUS.dll"), MB_OK);
+		//报错
+	}
+	else if (shapes[B].type == 3 && shapes[B].ptsBz.size() < 2)
+	{
+		MessageBox(NULL, _T("错误:贝塞尔点太少"), _T("来自INS_PLUS.dll"), MB_OK);
+		//报错
+	}
+	if (shapes[B].type == 3 && shapes[B].isTransed == 0) {
+		shapes[B].transBz();//事先转换
+	}
+	std::function<void(DWORD)> F = [=](int ptDm)
+	{
+		float x, y, vx, vy,ew;
+		x = *(float*)(ptDm + 0xC38);
+		y = *(float*)(ptDm + 0xC3C);
+		vx = *(float*)(ptDm + 0xC44);
+		vy = *(float*)(ptDm + 0xC48);
+		if (shapes[B].isInsideA(x, y))
+		{
+			ew = nw;
+			if (*(float*)(ptDm + 0xCA4) != -999999.0f)
+			{
+				ew *= *(float*)(ptDm + 0xCA4);
+			}
+			else
+			{
+				ew *= *(float*)(ptDm + 0xCA4);
+			}
+		}
+		else
+		{
+			ew = mw;
+			if (*(float*)(ptDm + 0xCA4) != -999999.0f)
+			{
+				ew /= *(float*)(ptDm + 0xCA4);
+			}
+			else
+			{
+				ew /= *(float*)(ptDm + 0xCA4);
+			}
+		}
+		if (refractDm(B, x, y, vx, vy, ew, (float*)(ptDm + 0xC44), (float*)(ptDm + 0xC48), (float*)(ptDm + 0xC54)))
+		{
+			if (M != -1)
+				*(int*)(ptDm + 0xCB8) = M;
+			if (R != -1)
+				*(int*)(ptDm + 0xC9C) = R;
+		}
+	};
+	forEachDm(F);
 }

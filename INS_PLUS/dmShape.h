@@ -136,9 +136,10 @@ struct Mask
 };
 std::tuple<int, float, float, float> getRoot3(float a, float b, float c, float d);
 std::pair<int, float> getRootBzLine(float ex1, float ey1, float ex2, float ey2, float ax, float bx, float cx, float dx, float ay, float by, float cy, float dy);
-std::pair<float, float> reflectLine(float dx, float dy, float vx, float vy);
+void reflectLine(float dx, float dy, float& vx, float& vy);
 std::tuple<int, float, float> getLineCrossOverPoint(float x1, float y1, float vx, float vy, float a1, float b1, float a2, float b2);
 int reflectDm(int B, float& x, float& y, float& vx, float& vy,float* ptvx,float* ptvy,float* ptr);
+int refractDm(int B, float& x, float& y, float& vx, float& vy,float wn, float* ptvx, float* ptvy, float* ptr);
 
 void inline INS_2500(DWORD ptNowObj); 
 void inline INS_2501(DWORD ptNowObj);

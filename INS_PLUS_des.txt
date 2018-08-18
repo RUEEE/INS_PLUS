@@ -451,15 +451,17 @@ dll:INS_PLUS.dll
 		判断(x1,y1)点出发的(x2,y2)这条向量的反弹轨迹,由(xw,yw,r)两部分组成,作为一个(xw,yw)当作向量指明反弹之后的方向,该向量长度和(x2,y2)相同,r为反弹后方向的弧度值,相当于push xw,push yw,push r
 		如果该射线与图形不相交,则返回两个0.0f
 	
-	2543 int b,int n,int m,int r,float n1,float n2
+~	2543 int b,int n,int m,int r,float n1,float n2
 		refractInsideDanmaku()	refrInsdDm
-		让图形内部即将出去的标号为n的弹幕的轨迹发生偏折,折射率系数为浮点数,取弹幕0号变换的第1个浮点参数,设为w,w的标准值为1.0f,若w=-999999.0f,则取w=弹幕速度..n1,n2表明光在图形内,图形外的速度状况,n=1代表速度为1倍,n=0.5代表速度0.5倍,以此类推.m,r同上
+		让图形内部即将出去的标号为n的弹幕的轨迹发生偏折,折射率系数为浮点数,取弹幕0号变换的第1个浮点参数,设为w,w的标准值为1.0f,若w=-999999.0f,则取w=弹幕速度..n1,n2表明折射率.m,r同反射部分
 		设:入射角θ1,折射角θ2
-		sin(θ1)/sin(θ2)=n2/n1*w
-	2544 int b,int n,int m,int r,float n1,float n2
+		sin(θ1)/sin(θ2)=(n2/n1)/w
+~	2544 int b,int n,int m,int r,float n1,float n2
 		refractInsideDanmaku()	refrInsdDm
-		让图形外部即将出去的标号为n的弹幕的轨迹发生偏
-	2545 int b,int n,int m,int r,float n1,float n2
+		让图形外部即将出去的标号为n的弹幕的轨迹发生偏折
+		设:入射角θ1,折射角θ2
+		sin(θ1)/sin(θ2)=(n1/n2)*w
+~	2545 int b,int n,int m,int r,float n1,float n2
 		refractThroughDanmaku()	refrThrDm
 		让穿过图形的弹幕发生折射,区别同39-40
 	

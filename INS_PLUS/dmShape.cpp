@@ -368,17 +368,20 @@ std::pair<int, float> getRootBzLine(float ex1, float ey1, float ex2, float ey2, 
 	}
 	return make_pair(0, 0.0f);
 }
-#undef EPS2
-std::pair<float, float> reflectLine(float dx, float dy, float vx, float vy)
+
+void reflectLine(float dx, float dy, float& vx, float& vy)
 {
 	float lenD2 = dx*dx + dy * dy,lenV2 = vx*vx + vy * vy;
 	float div1MulLen = 1/sqrtf(lenD2*lenV2);
-	float sint,cost,sin2t,cos2t;
+	float sint,cost,sin2t,cos2t,ax,ay;
+	ax = vx, ay = vy;
 	sint = (vx * dy - vy * dx)*div1MulLen;
-	cost = (vx*dx + vy * dy)*div1MulLen;
+	cost = (vx * dx + vy * dy)*div1MulLen;
 	sin2t = 2 * sint*cost;
 	cos2t = 2 * cost * cost - 1;
-	return std::make_pair(cos2t*vx - sin2t * vy, sin2t*vx + cos2t * vy);
+	vx = cos2t * ax - sin2t * ay;
+	vy = sin2t * ax + cos2t * ay;
+	return;
 }
 
 std::tuple<int, float,float> getLineCrossOverPoint(float x1, float y1,float vx,float vy,float a1,float b1,float a2,float b2)
@@ -553,9 +556,198 @@ int reflectDm(int B, float& x, float& y, float& vx, float& vy, float* ptvx,float
 	}
 	p = shapes[B].transOthPt(dx, dy);//让dx,dy变回原来的
 	dx = p.first; dy = p.second;
-	p = reflectLine(dx, dy, bx, by);
-	*ptvx = p.first;
-	*ptvy = p.second;
-	*ptr = atan2f(p.second, p.first);
+	reflectLine(dx, dy, bx, by);
+	*ptvx = bx;
+	*ptvy = by;
+	*ptr = atan2f(by,bx);
 	return 1;//执行成功
 }
+
+int refractDm(int B, float& x, float& y, float& vx, float& vy,float wn, float* ptvx, float* ptvy, float* ptr)
+{
+	float dx, dy, sx, sy, rtx, bx, by;
+	bx = vx; by = vy;
+	sx = shapes[B].x; sy = shapes[B].y;
+	auto p = shapes[B].transOthPtN(x - sx, y - sy);
+	x = p.first; y = p.second;
+	p = shapes[B].transOthPtN(vx, vy);
+	vx = p.first; vy = p.second;
+	//将线段置换入坐标轴
+	switch (shapes[B].type)
+	{
+	case 0://圆
+	{
+		auto root = getRoot3(0, vx*vx + vy * vy, 2 * vx*x + 2 * y*vy, x*x + y * y - shapes[B].sx*shapes[B].sx);
+		//求解圆与直线的交点
+		switch (std::get<0>(root))
+		{
+		case 2:
+			if (std::get<1>(root) < 0 || std::get<1>(root) - 1>1)
+			{
+				//如果x1不合法
+				if (std::get<2>(root) < 0 || std::get<2>(root)  > 1)
+				{
+					//如果x2不合法
+					return 0;
+				}
+				rtx = std::get<2>(root);
+			}
+			else {
+				//x1合法
+				if (std::get<2>(root) >= 0 && std::get<2>(root) <= 1 && std::get<2>(root) < std::get<1>(root))
+				{
+					rtx = std::get<2>(root);//x2合法且比x1好
+				}
+				else {
+					rtx = std::get<1>(root);//x2总之不比x1好
+				}
+			}
+			break;
+		case 1:
+			if (std::get<1>(root) < -EPS || std::get<1>(root) - 1>EPS)
+			{
+				//如果x1不合法
+				return 0;
+			}
+			rtx = std::get<1>(root);
+			break;
+		default:
+			//失效
+			return 0;
+		}
+		dx = rtx * vy + y; dy = -(rtx * vx + x);//获得斜率的向量
+	}
+	break;
+	case 1://方
+	{
+		float re = 2.0f, esi, edi;
+		esi = shapes[B].sx; edi = shapes[B].sy;
+		std::tuple<int, float, float> root;
+		root = getLineCrossOverPoint(x, y, vx, vy, -esi, -edi, 2 * esi, 0);//上
+		if (std::get<0>(root) == 1 && re > std::get<1>(root))
+		{
+			re = std::get<1>(root); dx = 1; dy = 0;
+		}
+		root = getLineCrossOverPoint(x, y, vx, vy, -esi, edi, 2 * esi, 0);//下
+		if (std::get<0>(root) == 1 && re > std::get<1>(root))
+		{
+			re = std::get<1>(root); dx = 1; dy = 0;
+		}
+		root = getLineCrossOverPoint(x, y, vx, vy, -esi, -edi, 0, 2 * edi);//左
+		if (std::get<0>(root) == 1 && re > std::get<1>(root))
+		{
+			re = std::get<1>(root); dx = 0;  dy = 1;
+		}
+		root = getLineCrossOverPoint(x, y, vx, vy, esi, -edi, 0, 2 * edi);//右
+		if (std::get<0>(root) == 1 && re > std::get<1>(root))
+		{
+			re = std::get<1>(root); dx = 0; dy = 1;
+		}
+		if (re == 2)
+		{
+			//失效
+			return 0;
+		}
+	}
+	break;
+	case 2://多个线段
+	{
+		int n = shapes[B].pts.size(), tn = -1, sn = -1;
+		float rt = 2.0f;
+		float lx, ly, lvx, lvy;
+		std::tuple<int, float, float> root;
+		int i, j;
+		for (i = 0, j = 1; i < n; ++i, ++j)
+		{
+			if (j == n)
+				j = 0;
+			lx = shapes[B].pts[i].first;
+			ly = shapes[B].pts[i].second;
+			lvx = shapes[B].pts[j].first - lx;
+			lvy = shapes[B].pts[j].second - ly;
+			root = getLineCrossOverPoint(x, y, vx, vy, lx, ly, lvx, lvy);
+			if (std::get<0>(root) == 1 && rt > std::get<1>(root))
+			{
+				rt = std::get<1>(root);
+				tn = i;
+				sn = j;
+			}
+		}
+		if (tn == -1)
+			return 0;//失效
+		dx = shapes[B].pts[sn].first - shapes[B].pts[tn].first;
+		dy = shapes[B].pts[sn].second - shapes[B].pts[tn].second;
+	}
+	break;
+	case 3://贝塞尔曲线
+	{
+		int n = shapes[B].funcsBz.size(), tn = -1;
+		float w = 0.0f, t, lnd = 999999.0f, ld = 0.0f;
+		float Ax, Bx, Cx, Dx, Ay, By, Cy, Dy;
+		float xa, ya;
+		for (int k = 0; k<n; k++)
+		{
+			std::tie(Ax, Bx, Cx, Dx, Ay, By, Cy, Dy) = shapes[B].funcsBz[k];
+			auto root = getRootBzLine(x, y, vx, vy, Ax, Bx, Cx, Dx, Ay, By, Cy, Dy);
+			if (root.first != 0)
+			{
+				t = root.second;
+				xa = Ax * t*t*t + Bx * t*t + Cx * t + Dx - x;
+				ya = Ay * t*t*t + By * t*t + Cy * t + Dy - y;
+				ld = ya * ya + xa * xa;//判断哪个距离最近
+				if (ld<lnd)
+				{
+					tn = k;
+					w = t;
+					lnd = ld;
+				}
+			}
+		}
+		//遍历完,有可能没有交点(因为bz的边界判定)
+		if (tn == -1)//失效
+			return 0;
+		std::tie(Ax, Bx, Cx, Dx, Ay, By, Cy, Dy) = shapes[B].funcsBz[tn];
+		//求导
+		dx = 3 * Ax*t*t + 2 * Bx*t + Cx;
+		dy = 3 * Ay*t*t + 2 * By*t + Cy;
+	}
+	break;
+	default:
+		return 0;
+	}
+	//上面这段和反射一样
+	
+	p = shapes[B].transOthPt(dx, dy);//让dx,dy变回原来的
+	dx = p.second; dy = -p.first;//dx,dy反转90d
+	//判断法向量和入射光线的方向是否一致
+	float cosw = bx * dx + by * dy, sinw, lenw1divd,sinw2,cosw2;
+	lenw1divd = 1/sqrtf((bx*bx+by*by)*(dx*dx+dy*dy));
+	if (cosw<0)
+	{
+		cosw = -cosw;//顺便把点积正过来
+		dx = -dx; dy = -dy;//让方向一致
+	}
+	sinw = (bx * dy - by * dx)*lenw1divd;
+	cosw *= lenw1divd;
+	sinw2 = wn * sinw;
+	if (sinw2 > 1.0f || sinw2 < -1.0f)
+	{
+		reflectLine(dy, -dx, bx, by);
+		*ptvx = bx;
+		*ptvy = by;
+		*ptr = atan2f(by, bx);
+		//发生反射了
+		return 1;
+	}
+	cosw2 = sqrtf(fabsf(1 - sinw2 * sinw2));//由于法向量和入射方向一致所以不用改符号
+	sx = cosw * bx - sinw * by;
+	sy = sinw * bx + cosw * by;
+
+	bx = cosw2 * sx + sinw2 * sy;
+	by = -sinw2 * sx + cosw2 * sy;
+	*ptvx = bx;
+	*ptvy = by;
+	*ptr = atan2f(by, bx);
+	return 1;//执行成功
+}
+#undef EPS2
