@@ -404,7 +404,7 @@ std::tuple<int, float,float> getLineCrossOverPoint(float x1, float y1,float vx,f
 	return std::make_tuple(-1, t1, t2);//直线相交而非线段
 }
 
-int reflectDm(int B, float& x, float& y, float& vx, float& vy, float* ptvx,float* ptvy,float* ptr)
+int reflectDm(int B, float& x, float& y, float vx, float vy, float* ptvx,float* ptvy,float* ptr)
 {
 	float dx, dy, sx, sy, rtx, bx, by;
 	bx = vx; by = vy;
@@ -563,7 +563,7 @@ int reflectDm(int B, float& x, float& y, float& vx, float& vy, float* ptvx,float
 	return 1;//执行成功
 }
 
-int refractDm(int B, float& x, float& y, float& vx, float& vy,float wn, float* ptvx, float* ptvy, float* ptr)
+int refractDm(int B, float& x, float& y, float vx, float vy,float wn, float* ptvx, float* ptvy, float* ptr)
 {
 	float dx, dy, sx, sy, rtx, bx, by;
 	bx = vx; by = vy;
@@ -737,7 +737,7 @@ int refractDm(int B, float& x, float& y, float& vx, float& vy,float wn, float* p
 		*ptvy = by;
 		*ptr = atan2f(by, bx);
 		//发生反射了
-		return 1;
+		return 2;
 	}
 	cosw2 = sqrtf(fabsf(1 - sinw2 * sinw2));//由于法向量和入射方向一致所以不用改符号
 	sx = cosw * bx - sinw * by;

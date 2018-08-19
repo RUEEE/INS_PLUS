@@ -578,7 +578,7 @@ void inline INS_2541(DWORD ptNowObj)
 	int N = autoGetArgIntB(ptNowObj, 1);
 	int M = autoGetArgIntB(ptNowObj, 2);
 	int R = autoGetArgIntB(ptNowObj, 3);
-	if (shapes[B].type == 2 && shapes[B].pts.size() < 3)
+	if (shapes[B].type == 2 && shapes[B].pts.size() < 2)//如果是纯反弹不用考虑内外问题
 	{
 		MessageBox(NULL, _T("错误:点太少"), _T("来自INS_PLUS.dll"), MB_OK);
 		//报错
@@ -611,7 +611,7 @@ void inline INS_2541(DWORD ptNowObj)
 void inline INS_2542(DWORD ptNowObj)
 {
 	int B = autoGetArgIntB(ptNowObj, 0);
-	if (shapes[B].type == 2 && shapes[B].pts.size() < 3)
+	if (shapes[B].type == 2 && shapes[B].pts.size() < 2)
 	{
 		MessageBox(NULL, _T("错误:点太少"), _T("来自INS_PLUS.dll"), MB_OK);
 		//报错
@@ -624,7 +624,6 @@ void inline INS_2542(DWORD ptNowObj)
 	if (shapes[B].type == 3 && shapes[B].isTransed == 0) {
 		shapes[B].transBz();//事先转换
 	}
-
 	float x, y, vx, vy, nx, ny, r;
 	x = autoGetArgFloatB(ptNowObj, 1);
 	y = autoGetArgFloatB(ptNowObj, 2);
@@ -676,14 +675,7 @@ void inline INS_2543(DWORD ptNowObj)
 			vy = *(float*)(ptDm + 0xC48);
 			if (!shapes[B].isInsideA(x + vx, y + vy))
 			{
-				if (*(float*)(ptDm + 0xCA4)!=-999999.0f)
-				{
-					refractDm(B, x, y, vx, vy, *(float*)(ptDm + 0xCA4)*nw, (float*)(ptDm + 0xC44), (float*)(ptDm + 0xC48), (float*)(ptDm + 0xC54));
-				}
-				else
-				{
-					refractDm(B, x, y, vx, vy, *(float*)(ptDm + 0xC50)*nw, (float*)(ptDm + 0xC44), (float*)(ptDm + 0xC48), (float*)(ptDm + 0xC54));
-				}
+				refractDm(B, x, y, vx, vy, *(float*)(ptDm + 0xCA4)*nw/(*(float*)(ptDm + 0xCA8)), (float*)(ptDm + 0xC44), (float*)(ptDm + 0xC48), (float*)(ptDm + 0xC54));
 				if (M != -1)
 					*(int*)(ptDm + 0xCB8) = M;
 				if (R != -1)
@@ -724,14 +716,7 @@ void inline INS_2544(DWORD ptNowObj)
 			vy = *(float*)(ptDm + 0xC48);
 			if (shapes[B].isInsideA(x + vx, y + vy))
 			{
-				if (*(float*)(ptDm + 0xCA4) != -999999.0f)
-				{
-					refractDm(B, x, y, vx, vy, *(float*)(ptDm + 0xCA4)/nw, (float*)(ptDm + 0xC44), (float*)(ptDm + 0xC48), (float*)(ptDm + 0xC54));
-				}
-				else
-				{
-					refractDm(B, x, y, vx, vy, *(float*)(ptDm + 0xC50)/nw, (float*)(ptDm + 0xC44), (float*)(ptDm + 0xC48), (float*)(ptDm + 0xC54));
-				}
+				refractDm(B, x, y, vx, vy, *(float*)(ptDm + 0xCA8)*nw / (*(float*)(ptDm + 0xCA4)), (float*)(ptDm + 0xC44), (float*)(ptDm + 0xC48), (float*)(ptDm + 0xC54));
 				if (M != -1)
 					*(int*)(ptDm + 0xCB8) = M;
 				if (R != -1)
@@ -767,41 +752,82 @@ void inline INS_2545(DWORD ptNowObj)
 	std::function<void(DWORD)> F = [=](int ptDm)
 	{
 		float x, y, vx, vy,ew;
+		int ret;
 		x = *(float*)(ptDm + 0xC38);
 		y = *(float*)(ptDm + 0xC3C);
 		vx = *(float*)(ptDm + 0xC44);
 		vy = *(float*)(ptDm + 0xC48);
 		if (shapes[B].isInsideA(x, y))
 		{
-			ew = nw;
-			if (*(float*)(ptDm + 0xCA4) != -999999.0f)
-			{
-				ew *= *(float*)(ptDm + 0xCA4);
-			}
-			else
-			{
-				ew *= *(float*)(ptDm + 0xCA4);
-			}
+			ew = *(float*)(ptDm + 0xCA4)*nw/(*(float*)(ptDm + 0xCA8));
 		}
 		else
 		{
-			ew = mw;
-			if (*(float*)(ptDm + 0xCA4) != -999999.0f)
-			{
-				ew /= *(float*)(ptDm + 0xCA4);
-			}
-			else
-			{
-				ew /= *(float*)(ptDm + 0xCA4);
-			}
+			ew = *(float*)(ptDm + 0xCA8)*mw / (*(float*)(ptDm + 0xCA4));
 		}
-		if (refractDm(B, x, y, vx, vy, ew, (float*)(ptDm + 0xC44), (float*)(ptDm + 0xC48), (float*)(ptDm + 0xC54)))
+		if (ret=refractDm(B, x, y, vx, vy, ew, (float*)(ptDm + 0xC44), (float*)(ptDm + 0xC48), (float*)(ptDm + 0xC54)))
 		{
 			if (M != -1)
 				*(int*)(ptDm + 0xCB8) = M;
 			if (R != -1)
 				*(int*)(ptDm + 0xC9C) = R;
+			if (ret == 1)
+			{
+				*(float*)(ptDm + 0xC38) += vx;
+				*(float*)(ptDm + 0xC3C) += vy;//让它折射后不再次折射
+			}
 		}
 	};
 	forEachDm(F);
+}
+
+void inline INS_2546(DWORD ptNowObj)
+{
+	int B = autoGetArgIntB(ptNowObj, 0);
+	if (shapes[B].type == 2 && shapes[B].pts.size() < 3)
+	{
+		MessageBox(NULL, _T("错误:点太少"), _T("来自INS_PLUS.dll"), MB_OK);
+		//报错
+	}
+	else if (shapes[B].type == 3 && shapes[B].ptsBz.size() < 2)
+	{
+		MessageBox(NULL, _T("错误:贝塞尔点太少"), _T("来自INS_PLUS.dll"), MB_OK);
+		//报错
+	}
+	if (shapes[B].type == 3 && shapes[B].isTransed == 0) {
+		shapes[B].transBz();//事先转换
+	}
+	float x, y, vx, vy, nx, ny, r,ew,t,R;
+	x = autoGetArgFloatB(ptNowObj, 1);
+	y = autoGetArgFloatB(ptNowObj, 2);
+	vx = autoGetArgFloatB(ptNowObj, 3);
+	vy = autoGetArgFloatB(ptNowObj, 4);
+	float nw = autoGetArgFloatB(ptNowObj, 5) / autoGetArgFloatB(ptNowObj, 6);
+	float mw = autoGetArgFloatB(ptNowObj, 6) / autoGetArgFloatB(ptNowObj, 5);
+	t = autoGetArgFloatB(ptNowObj, 7);
+	R = autoGetArgFloatB(ptNowObj, 8);
+	nw= t * nw / R;
+	mw= R * mw / t;
+	autoSubESP(ptNowObj, -3);
+	int pt = (int)getPtrArgSt(ptNowObj, -1);
+	if (shapes[B].isInsideA(x, y))
+	{
+		ew = nw;
+	}
+	else
+	{
+		ew = mw;
+	}
+	if (!refractDm(B, x, y, vx, vy,ew, &nx, &ny, &r))
+	{
+		nx = ny = r = 0.0f;
+	}
+	*(float*)pt = r;
+	*(BYTE*)(pt - 4) = 'f';
+	pt -= 8;
+	*(float*)pt = ny;
+	*(BYTE*)(pt - 4) = 'f';
+	pt -= 8;
+	*(float*)pt = nx;
+	*(BYTE*)(pt - 4) = 'f';
 }
