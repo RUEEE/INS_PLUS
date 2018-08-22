@@ -35,16 +35,16 @@ dll:INS_PLUS.dll
 
 2000:
 ~	2000 int n=1:
-		castArgumentInStackToInt()	cstArgStS
+		opCastToInt()	opCstS
 		将栈顶下数第n个数强转换成int格式,无变量则修改栈顶
 ~	2001 int n=1:
-		castArgumentInStackToFloat()	cstArgStF
+		opCastToFloat()	opCstF
 		将栈顶下数第n个数强转换成float格式,无变量则修改栈顶
 ~	2002 int n=1:
-		changeFlagOfArgumentInStackToInt()	chgFlgArgStS
+		opChangeFlagToInt()	opChgFlgS
 		将栈顶下数第n个数的flag改为int而不影响dw值,无变量则修改栈顶
 ~	2003 int n=1:
-		changeFlagOfArgumentInStackToFloat()	chgFlgArgStF
+		opChangeFlagToFloat()	opChgFlgF
 		将栈顶下数第n个数的flag改为float而不影响dw值,无变量则修改栈顶
 ~	2004 :
 		pushESP()	pushESP
@@ -65,34 +65,34 @@ dll:INS_PLUS.dll
 		opDegreeToRadian() opDegRad
 		栈顶=[-1]*pi/180
 ~	2015 :
-		operatorLn()	opLn
+		opLn()	opLn
 		栈顶=ln([-1.0f])
 ~	2016 :
-		operatorLog()	opLog
+		opLog()	opLog
 		栈顶=log([-1.0f])(log(2,[-1.0f]))
 ~	2017 :
-		operatorPowFloat()	opPowF
+		opPowFloat()	opPowF
 		栈顶=pow([-2.0f],[-1.0f])
 ~	2018 :
-		operatorPowInt()	opPowS
+		opPowInt()	opPowS
 		(快速幂)栈顶=pow([-2],[-1])
 ~	2019 :
-		operatorSgnInt()	opSgnS
+		opSgnInt()	opSgnS
 		栈顶=sgn([-1])
 ~	2020 :
-		operatorSgnFloat()	opSgnF
+		opSgnFloat()	opSgnF
 		栈顶=sgn([-1.0f])
 ~	2021 :
-		operatorTan()	opTan
+		opTan()	opTan
 		栈顶=tan([-1.0f])
 ~	2022 :
-		operatorAsin()	opAsin
+		opAsin()	opAsin
 		栈顶=arcsin([-1.0f])
 ~	2023 :
-		operatorAcos()	opAcos
+		opAcos()	opAcos
 		栈顶=arccos([-1.0f])
 ~	2024 :
-		operatorAtan()	opaTan
+		opAtan()	opAtan
 		栈顶=arctan([-1.0f])
 ~	2025 float x,float y:
 		pushAtan2()	pushAtan2
@@ -131,13 +131,13 @@ dll:INS_PLUS.dll
 		compareSaveFloat()	cmpSvF
 		n大于零,保留[-1.0f],[-2.0f]中的较大数,小于0保留较小数
 ~	2037 :
-		castBoolEX()	cstBlEX	
+		castBoolEX()	cstBlX	
 		将[-1]:{0,!0}映射成{-1,1}(如果[-1]为0则[-1]=-1,[-1]不为0则为1,flag强制变为int)
 ~	2038 int a int b:
-		castBoolIntEx()	cstBlPHS
+		castBoolIntPH()	cstBlPS
 		将[-1]:{0,!0}映射成{a,b},a,b均为int
 ~	2039 float a float b:
-		castBoolFloatEx()	cstBlPHF
+		castBoolFloatPH()	cstBlPF
 		将[-1]:{0,!0}映射成{a,b},a,b均为float
 	;注:凡有关vector的计算都按float计算,默认从栈顶向下先y后x,复数先虚部后实部
 ~	2050 :
@@ -209,13 +209,13 @@ dll:INS_PLUS.dll
 		pushDereferencedFloat()	pushCntF
 		塞入*p到栈顶(不填写则将栈顶替换成*(栈顶))
 ~	2102 int* p=&[-2]:
-		popInt()	popS()
+		popPtrInt()	popPtrS()
 		弹出栈顶的数赋值到*p,确保栈顶为int,否则则将栈顶的数字转换为int存入,如果不指明则按照*[-2]=[-1]来填写,并弹出[-2]
 ~	2103 float* p=&[-2]:
-		popFloat()	popF()
+		popPtrFloat()	popPtrF()
 		弹出栈顶的数赋值到*p,确保栈顶为float,否则则将栈顶的数字转换为float存入,如果不指明则按照*[-2]=[-1]来填写,并弹出[-2]
 ~	2104 void* p=&[-2]:
-		popArgument()	popArg
+		popDereferencedPtr()	popCntPtr
 		弹出栈顶的数赋值到*p,不管是否为整数或浮点,如果不指明则按照*[-2]=[-1]来填写,并弹出[-2]
 ~	2105 DWORD p:
 		pushAddressOfArgument()	pushAddrArg
@@ -231,21 +231,21 @@ dll:INS_PLUS.dll
 		将*[p+offset*sz]压入堆栈
 		;例如2106(0x0040000,4,0x1)就是压入0x0040004入栈
 ~	2109 void* p,int num,dword type,int isAddOffset
-		pushMultiArgument()	pushMtArg
+		pushMultiDereferencedPtr()	pushMtCntPtr
 		将*p后的num个数(dw)压入堆栈,按照type格式压,type从低位到高位指定是否为float,为1为float,isAddOffset为常量,指定是否在语句块运行完成后将p增加sizeof(dword)*num,(如果p为const则请填0),一次最多压32个值
 		;例如:
 		;ins_2109(0x0040000,31,0x48800008,1)就是将0x004000到0x004007C这31个变量压入堆栈,且第4,24,28,31个数字为float
 ~	2110 void* p,int num,dword type
-		popMultiArgument()	popMtArg
+		popMultiDereferencedPtr()	popMtCntPtr
 		与2109相反,将堆栈中的数赋值入*p,不同2109,没有第四个参数
 		;例如:
 		;ins_2110(0x0040000,31,0x48800008)就是将0x004000到0x004007C这31个变量从堆栈取出,0x004007C为[-1],...[0x004000]为[-31]
 ~	2111 void &p,int num,dword type
-		pushMultiVariable()	pushMtVar
+		pushMultiArgument()	pushMtArg
 		将&p与之后的变量共num个push入栈,p按照int型输入,即$p,基础类型为type,1 float,0 int
 		;例如:var point,point_1, ins_2111(point,2,2)能够将point按int,point_1按float送入
 ~	2112 void &p,int num,dword type
-		pushMultiVariable()	pushMtVar
+		pushMultiArgument()	pushMtArg
 		将&p与之后的变量共num个pop出栈栈,基础类型为type,1 float,0 int
 		;例如:var point,point_1, ins_2112(point,2,2)能够将[-1]赋值point_1,[-2]赋值point
 ~	2113 int* p,int sz [sizeof(type p)],int offset
@@ -269,7 +269,7 @@ dll:INS_PLUS.dll
 		push入当前按键状态
 		(0x0不按,0x1按z,0x2按x,0x8按shift,0x10上,0x20下,0x40左,0x80右,0x100按esc,0x100按ctrl,0xA00按C(为啥乘了10),0x10000按q,40000按p或home,0x200000按R,0x100000按d,8000000按enter)
 ~	2306 :
-		PlayerSuicide()	plScd
+		playerSuicide()	plScd
 		让自机自杀(无视无敌时间)
 ~	2307 float x,float y:
 		setPlayerPosition()  setPlPos
@@ -278,13 +278,13 @@ dll:INS_PLUS.dll
 		setPlayerInvincibilityTime()  setPlIvcTm
 		修改无敌时间为t帧
 ~	2309 int l:
-		setLife()	setPlLf
+		setPlayerLife()	setPlLf
 		修改生命数为l
 ~	2310 int b:
-		setBomb()	setPlBm
+		setPlayerBomb()	setPlBm
 		修改Bomb数为b
 ~	2311 int p:
-		setPlayerPower()	setPlP
+		setPlayerPower()	setPlPower
 		修改p数为p
 		
 2400:
@@ -306,7 +306,7 @@ dll:INS_PLUS.dll
 		popFrontMessage()	popFrtMsg
 		直接捕获消息链最前的消息(最后发出的消息),无消息则id=0
 ~	2414 int& id,int& a,int& b,int& c,float& x,float& y,float& z:
-		popMessage()	popMsg
+		popBackMessage()	popBkMsg
 		直接捕获消息链最后的消息(最先发出的消息),无消息则id=0
 ~	2415 int sdObj,int& id,int& a,int& b,int& c,float& x,float& y,float& z:
 		catchMessage()	catchMsg
@@ -315,7 +315,7 @@ dll:INS_PLUS.dll
 		clearMessage()	clrMsg
 		清除所有消息链里面的消息
 ~	2417 int id:
-		clearMessage()	clrMsg
+		clearIDMessage()	clrIDMsg
 		清除消息链里向id发送的Msg(可以放在死尸弹的call里面)
 ~	2418 :
 		getSizeMessageList()	getSzMsgLst
@@ -330,7 +330,7 @@ dll:INS_PLUS.dll
 		setShapeType()	setShpTp
 		设置某图形的样式,0椭圆,1平行四边形,2路径图形,3贝塞尔路径,(对于ins_2512),默认为0
 ~	2502 int a,float x,float y
-		setShape()	setShp
+		setShapeBasicSz()	setShpBscSz
 		设置图形的基本形状,对于椭圆圆只有x生效为半径,对于平行四边形为「半」长宽,创建出来之后为一个圆和矩形,需要后续变换才能改变为椭圆,平行四边形
 ~	2503 int a,float x,float y
 		setShapePosition() setShpPos
@@ -372,10 +372,10 @@ dll:INS_PLUS.dll
 		addPathPoint()	addPthPt
 		向路径图形中加入一个新点(x,y),对于一个路径图形,至少需要三个点才能闭合,默认是闭合图形,即不需要输入两次第一个点.
 ~	2516 int a,float x1,float y1,float x2,float y2,float x3,float y3
-		addBezierPoint()	addBzrPt
+		addBezierPoint()	addBzPt
 		向贝塞尔路径中加入point(x1,y1)其入锚点指向(x2,y2),出锚点指向(x3,y3),对于一个贝塞尔图形,至少只要一个点就能视为闭合图形
 ~	2517 int a
-		standardizeBezierShape()	stdBzrShp
+		standardizeBezierShape()	stdBzShp
 		对一个贝塞尔图形进行标准化,即将两个用{(x1,y1),(x2,y2),(x3,y3)}表示的锚点转换为用{{ax,bx,cx,dx}{ay,by,cy,dy}}表示的方程
 ~	2518 int a
 		getEdgeNum()	getEdgNum	
@@ -393,7 +393,7 @@ dll:INS_PLUS.dll
 		boolForMaskC()	boolMskC
 		同2521,但是录入时采取复制的措施,即修改shape不会造成改变
 ~	2523 int b,float x,float y
-		moveMask()	movMsk
+		setMaskPosition()	setMskPos
 		移动遮罩b到(x,y)
 ~	2524 int b,float x,float y
 		isInMask()	isInMsk
@@ -407,25 +407,25 @@ dll:INS_PLUS.dll
 	;因此处理的时候可以在第一个变换处
 	;写mode:-2147483648(0,n,-999999.0f,-999999.0f)
 ~	2530 int b,int n,int t,int w
-		setDanmakuTransformationID()	setDmTransID
+		setDanmakuInMaskTransformationID()	setDmMskTransID
 		对于弹幕标号为n的弹幕,如果在b遮罩内且变换序号不等于t且小于w则修改其变换序号到t(需要等到当前变换完成之后才有效)
 ~	2531 int b,int n,int t,int ismw,int mode,int x,int y,float r,float s
-		setDanmakuTransformationShort()	setDmTransA
+		setDanmakuInMaskTransformationShort()	setDmMskTransA
 		修改处在b遮罩内标号n弹幕的变换,除了第一个参数之外同ins_609()
 ~	2532 int b,int n,int t,int ismw,int mode,int x,int y,int w,int z,float r,float s,float m,float n
-		setDanmakuTransformationLong()	setDmTransB
+		setDanmakuInMaskTransformationLong()	setDmMskTransB
 		修改处在b遮罩内标号n弹幕的变换,除了第一个参数之外同ins_610()
 ~	2533 int b,int n,float r
-		setDanmakuRotationEX()	setDmRotEX
+		setDanmakuInMaskRotationEX()	setDmMskRotEX
 		修改处在b遮罩内标号n的弹幕,使其朝向遮罩的虚位置(m,n)并再旋转r rad
 ~	2534 int b,int n
-		setDanmakuPositionEX()	setDmPosEX
+		setDanmakuInMaskPositionEX()	setDmMskPosEX
 		修改处在b遮罩内标号n的弹幕,使其位置(x,y)增加遮罩虚位置(m,n)的值
 ~	2535 int b,int n,float f
-		setDanmakuSpeedEX()	setDmSpdEX
+		setDanmakuInMaskSpeedEX()	setDmMskSpdEX
 		修改处在b遮罩内标号n的弹幕,改变其速度,改变的依据为当前弹幕的速度(vx,vy)乘以遮罩b虚位置(m,n)到弹幕位置(x,y)的距离的平方的倒数乘以f,即(vx,vy)+=f/((m-x)^2+(n-y)^2)*(x-m,y-n)
 ~	2536 int b,int n,int m
-		setDanmakuDynamicID()	setDmDnmcID
+		setDanmakuInMaskDynamicID()	setDmMskDnmcID
 		修改b遮罩内标号n的弹幕的标号为m
 	
 ~	2537 int b,int n,int m,int r
@@ -457,8 +457,8 @@ dll:INS_PLUS.dll
 		设:入射角θ1,折射角θ2
 		sin(θ1)/sin(θ2)=(n2*r)/(n1*t)
 ~	2544 int b,int n,int m,int r,float n1,float n2
-		refractInsideDanmaku()	refrInsdDm
-		让图形外部即将出去的标号为n的弹幕的轨迹发生偏折
+		refractOutsideDanmaku()	refrOtsdDm
+		让图形外部即将进入的标号为n的弹幕的轨迹发生偏折
 		设:入射角θ1,折射角θ2
 		sin(θ1)/sin(θ2)=(n1*t)/(n2*r)
 ~	2545 int b,int n,int m,int r,float n1,float n2
@@ -466,6 +466,7 @@ dll:INS_PLUS.dll
 		让穿过图形的弹幕发生折射,区别同39-40
 	
 	2546 int b,float x1,float y1,float x2,float y2,float n1,float n2,float t,float r
+		getRefractedLine()	getRefrLn
 		类似2542的计算,但是是折射
 		
 		
