@@ -148,6 +148,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="D3D9N.h" />
     <ClInclude Include="dmAndObj.h" />
     <ClInclude Include="dmShape.h" />
     <ClInclude Include="ECLcaculation.h" />
@@ -158,6 +159,7 @@
     <ClInclude Include="test.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="D3D9N.cpp" />
     <ClCompile Include="dmAndObj.cpp" />
     <ClCompile Include="dllmain.cpp" />
     <ClCompile Include="dmShape.cpp" />

@@ -39,6 +39,9 @@
     <ClInclude Include="ECLcaculation.h">
       <Filter>头文件</Filter>
     </ClInclude>
+    <ClInclude Include="D3D9N.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
@@ -63,6 +66,9 @@
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="dmAndObj.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="D3D9N.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>
