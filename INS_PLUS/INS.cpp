@@ -2,30 +2,100 @@
 #include "INS.h"
 #include "dmAndObj.h"
 #include "ECLcaculation.h"
+int testVal=0;
+void INS_2333(DWORD* ptNowObj)
+{
+	char w[20];
+	testVal++;
+	testVal %= 5;
+	int u=testVal;
+	int flag = 0;
+	sprintf_s(w, "_%d.sht", u);
+	int ptw = (int)w;
+	int ptthis=*(int*)0x004e9bb8;
+	int ptdel=*(int*)(*(int*)0x004E9BB8+0x2c008);
+	_asm
+	{
+		mov eax,ptdel
+		push eax
+		mov eax,0x004904C4
+		call eax
+		pop eax
+
+		mov eax, ptw
+		push eax
+		mov ecx, ptthis
+		mov eax,0x00455a20
+		call eax
+		mov flag, eax
+	}
+	if (!flag)
+	{
+		
+		int poweru= *(int*)0x004E7440;
+		int power = (poweru+150)%400;
+		*(DWORD*)0x004E7440 = power;
+		__asm
+		{
+			mov ecx, DWORD_PTR[0x004E9BB8]
+			mov eax, 0x004567B0
+			call eax
+		}
+		power = poweru;
+		*(DWORD*)0x004E7440 = power;
+		__asm
+		{
+			mov ecx, DWORD_PTR[0x004E9BB8]
+			mov eax, 0x004567B0
+			call eax
+		}
+	}
+		return;
+
+	return;
+}
 
 void  init()
 {
 	*(DWORD*)(0x00526000) = (DWORD)INS_Switch;
 	*(DWORD*)(0x00526050) = (DWORD)shapes;
+
 	{
-		*(DWORD*)(0x00455A96) = 0x00526010;//修改加载位置
-		*(DWORD*)(0x00526010) = 0x00000000;//0
-		*(DWORD*)(0x00526014) = 0x004599D0;//1
-		*(DWORD*)(0x00526018) = 0x00459E10;//2
-		*(DWORD*)(0x0052601C) = 0x0045A780;//3
-		*(DWORD*)(0x00526020) = 0x0045AA20;//4
-		*(DWORD*)(0x00526024) = (DWORD)playerDm;//5							
+		DWORD addr= 0x00526010;
+		*(DWORD*)(0x00455A89) = addr;//修改加载位置
+		*(DWORD*)(addr + 0x0) = 0x00000000;//0
+		*(DWORD*)(addr + 0x4) = 0x004599C0;//1
+		*(DWORD*)(addr + 0x8) = 0x00459DB0;//2
+		*(DWORD*)(addr + 0xC) = 0x0045AA10;//3
+		*(DWORD*)(addr + 0x10) = 0x0045AEF0;//4
+		*(DWORD*)(addr + 0x14) = 0x0045B010;//5		
+		*(DWORD*)(addr + 0x18) = (DWORD)playerDm_flag1;//6	
+		*(DWORD*)(addr + 0x8) = (DWORD)playerDm_flag1;//2
+	}//伪造虚表,flag1
+	{
+		DWORD addr = 0x00526030;
+		*(DWORD*)(0x00455A96) = addr;//修改加载位置
+		*(DWORD*)(addr + 0x0) =  0x00000000;//0
+		*(DWORD*)(addr + 0x4) =  0x004599D0;//1
+		*(DWORD*)(addr + 0x8) =  0x00459E10;//2
+		*(DWORD*)(addr + 0xC) =  0x0045A780;//3
+		*(DWORD*)(addr + 0x10) = 0x0045AA20;//4
+		//*(DWORD*)(addr + 0x14) = (DWORD)playerDm_flag2;//5	
+		*(DWORD*)(addr + 0x8) = (DWORD)playerDm_flag2;//2 使用
 	}//伪造虚表,flag2
 	{
-		*(DWORD*)(0x00455A89) = 0x00526030;//修改加载位置
-		*(DWORD*)(0x00526030) = 0x00000000;//0
-		*(DWORD*)(0x00526034) = 0x004599C0;//1
-		*(DWORD*)(0x00526038) = 0x00459DB0;//2
-		*(DWORD*)(0x0052603C) = 0x0045AA10;//3
-		*(DWORD*)(0x00526040) = 0x0045AEF0;//4
-		*(DWORD*)(0x00526044) = 0x0045B010;//5		
-		*(DWORD*)(0x00526048) = (DWORD)playerDm2;//6	
-	}//伪造虚表,flag1
+		DWORD addr = 0x00526050;
+		*(DWORD*)(0x00455AB0) = addr;//修改加载位置
+		*(DWORD*)(addr + 0x0) = 0x00000000;//0
+		*(DWORD*)(addr + 0x4) = 0x00459BD0;//1
+		*(DWORD*)(addr + 0x8) = 0x0045A180;//2
+		*(DWORD*)(addr + 0xC) = 0x0045A7A0;//3
+		*(DWORD*)(addr + 0x10) = 0x0045A8E0;//4
+		*(DWORD*)(addr + 0x14) = 0x0045ABB0;//5	
+		*(DWORD*)(addr + 0x18) = 0x0045AD10;//6
+		*(DWORD*)(addr + 0x1C) = (DWORD)playerDm_flag4;//7
+	}//伪造虚表,flag4
+	
 }
 
 int _stdcall INS_Switch(int code, int ptINS, DWORD ptObj,DWORD* _obj)

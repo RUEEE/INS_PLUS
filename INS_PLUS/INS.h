@@ -576,10 +576,7 @@ inline void INS_2104(DWORD ptINS, DWORD ptNowObj)
 	}
 }
 
-inline void INS_2333(DWORD* ptNowObj)
-{
-	return;
-}
+void INS_2333(DWORD* ptNowObj);
 
 inline void INS_2113(DWORD ptNowObj)
 {

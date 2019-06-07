@@ -81,14 +81,24 @@ struct Mask
 	void init() { shp.clear(); x = y = m = n = 0; }
 	void addShape(Shape* sh,int type)
 	{
-		if(type>5 || type <0)//报错
-			MessageBox(NULL, _T("错误:没有对应的布尔运算"), _T("来自INS_PLUS.dll"), MB_OK);
+		if (type > 5 || type < 0)//报错
+		{
+			MessageBox(NULL, _T("错误:没有对应的布尔运算1"), _T("来自INS_PLUS.dll"), MB_OK);
+			WCHAR k[100];
+			wsprintf(k,L"%d",type);
+			MessageBox(NULL, k, _T("来自INS_PLUS.dll"), MB_OK);
+		}	
 		shp.push_back(std::make_pair(std::make_pair(nullptr,sh), type));
 	}
 	void addNewShape(Shape &sh, int type)
 	{
-		if (type>5 || type <0)//报错
-			MessageBox(NULL, _T("错误:没有对应的布尔运算"), _T("来自INS_PLUS.dll"), MB_OK);
+		if (type > 5 || type < 0)//报错
+		{
+			MessageBox(NULL, _T("错误:没有对应的布尔运算2"), _T("来自INS_PLUS.dll"), MB_OK);
+			WCHAR k[100];
+			wsprintf(k, L"%d", type);
+			MessageBox(NULL, k, _T("来自INS_PLUS.dll"), MB_OK);
+		}
 		std::shared_ptr<Shape> v(new Shape);
 		*v = sh;
 		shp.push_back(std::make_pair(std::make_pair(v,nullptr), type));
