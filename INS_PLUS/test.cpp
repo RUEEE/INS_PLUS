@@ -2,34 +2,24 @@
 #include "test.h"
 #include"tlhelp32.h"
 
-void _fastcall curve_laser_update1(DWORD ptr_this)
+#define player_x (*(float*)(*(DWORD*)(0x004E9BB8) + 0x618))
+#define player_y (*(float*)(*(DWORD*)(0x004E9BB8) + 0x61C))
+
+void _fastcall static_laser_update(DWORD ptr_this)
 {
-
-	int n = *(DWORD*)(ptr_this + 0x5F4);
-	float time = (float)(*(DWORD*)(ptr_this + 0x44));
-	DWORD ptr_s;
-	float omiga = 6.28318f / n;
-	for (int i = n-1; i >=0; i--)
-	{
-		ptr_s = *(DWORD*)(ptr_this + 0x153C) + i * 0x20;
-		float x, y,t;
-		t = i*omiga;
-		x = (1.5+0.05*cos(0.1*time))*50*cos(t); y = (1.5 + 0.05 * sin(0.1 * time)) * 50 * sin(t);
-		y = y + 224;
-		*(float*)ptr_s = x;
-		*(float*)(ptr_s+4) = y;
-		*(float*)(ptr_s + 0x18) = t + 1.57079f;/*贴图角度*/
-		float d;
-		d= sqrt(
-			(x - *(float*)(ptr_s + 0x20)) * (x - *(float*)(ptr_s + 0x20)) +
-			(y - *(float*)(ptr_s + 0x24)) * (y - *(float*)(ptr_s + 0x24))
-		);
-		*(float*)(ptr_s + 0x1C) = d;
-		/*判定*/
-	}
-	return;
+	float dx, dy, d, x, y, dir,_ebx,_esi,_edi;
+	x = *(float*)(ptr_this + 0x54);
+	y = *(float*)(ptr_this + 0x58);
+	dx = player_x - x;
+	dy = player_y - y;
+	d = 1.0f / sqrtf(dx * dx + dy * dy);
+	dx = dx * d;
+	dy = dy * d;
+	dx = dx * 0.01f + 0.99f * cosf(*(float*)(ptr_this + 0x6C));
+	dy = dy * 0.01f + 0.99f * sinf(*(float*)(ptr_this + 0x6C));
+	dir = atan2f(dy, dx);
+	*(float*)(ptr_this + 0x6C) = dir;
 }
-
 
 void _fastcall curve_laser_update(DWORD ptr_this)
 {
@@ -79,7 +69,49 @@ void _fastcall curve_laser_update(DWORD ptr_this)
 	return;
 }
 
-
+void _fastcall normal_laser_update(DWORD ptr_this)
+{
+	float dx, dy, d, x, y,dir,spd,len;
+	if(*(float*)(ptr_this+0x70)< (len=*(float*)(ptr_this + 0x5E4)))//没有完全生成
+	{
+		x = *(float*)(ptr_this + 0x54);
+		y = *(float*)(ptr_this + 0x58);
+		dx = player_x - x;
+		dy = player_y - y;
+		d = 1.0f/sqrtf(dx * dx + dy * dy);
+		dx = dx * d;
+		dy = dy * d;
+		dx =dx*0.05f+0.95f* cosf(*(float*)(ptr_this + 0x6C));
+		dy =dy*0.05f+0.95f* sinf(*(float*)(ptr_this + 0x6C));
+		dir = atan2f(dy, dx);
+		*(float*)(ptr_this + 0x6C) = dir;
+		spd=*(float*)(ptr_this + 0x78);
+		*(float*)(ptr_this + 0x60) = cosf(dir)*spd;
+		*(float*)(ptr_this + 0x64) = sinf(dir)*spd;
+	}
+	else
+	{
+		float vx, vy;
+		vx = *(float*)(ptr_this + 0x60);
+		vy = *(float*)(ptr_this + 0x64);
+		d = 1.0f / sqrtf(vx * vx + vy * vy);
+		len *= 0.5f;
+		x = *(float*)(ptr_this + 0x54)+len*(vx*d);
+		y = *(float*)(ptr_this + 0x58)+len*(vy*d);
+		dx = player_x - x;
+		dy = player_y - y;
+		d = 13.0f/(dx * dx + dy * dy);
+		dx *= d;
+		dy *= d;
+		vx += dx;
+		vy += dy;
+		dir = atan2f(vy, vx);
+		*(float*)(ptr_this + 0x6C) = dir;
+		*(float*)(ptr_this + 0x60) = vx;
+		*(float*)(ptr_this + 0x64) = vy;
+	}
+	return;
+}
 
 void curve_laser_update_init()
 {
@@ -107,7 +139,42 @@ void curve_laser_update_init()
 	*(BYTE*)(0x0044840E) = 0xE9;
 }
 
-int _fastcall stageDM()
+void normal_laser_update_init()
+{
+	BYTE* normal_laser_update_init = new BYTE[20]{
+	0x60,0xB8,
+	0x78,0x56,0x34,0x12,
+	0xFF,0xD0,0x61,0x55,0x8B,0xEC,0x83,0xEC,0x24,0xE9,
+	0x32,0x36,0xD9,0xFF };
+	DWORD oldP;
+	DWORD jmp_addr = (DWORD)(&(normal_laser_update_init[0])) - 0x00443640 - 5;
+	*(BYTE*)(0x00443640) = 0xE9;
+	*(DWORD*)(0x00443641) = jmp_addr;
+	*(BYTE*)(0x00443645) = 0x90;
+	*(DWORD*)(&(normal_laser_update_init[16])) = 0x00443646 - ((DWORD) & (normal_laser_update_init[16])) - 5;
+	*(DWORD*)(&(normal_laser_update_init[2])) = (DWORD)normal_laser_update;
+	VirtualProtect(normal_laser_update_init, sizeof(normal_laser_update_init), PAGE_EXECUTE_READWRITE, &oldP);
+}
+
+void static_laser_update_init()
+{
+	BYTE* static_laser_update_init = new BYTE[20]{
+	0x60,0xB8,
+	0x78,0x56,0x34,0x12,
+	0xFF,0xD0,0x61,0x55,0x8B,0xEC,0x83,0xE4,0xF8,0xE9,
+	0x22,0x58,0xE8,0xFD };
+	DWORD oldP;
+	DWORD jmp_addr = (DWORD)(&(static_laser_update_init[0])) - 0x00445830 - 5;
+	*(BYTE*)(0x00445830) = 0xE9;
+	*(DWORD*)(0x00445831) = jmp_addr;
+	*(BYTE*)(0x00445835) = 0x90;
+	*(DWORD*)(&(static_laser_update_init[16])) = 0x00445836 - ((DWORD) & (static_laser_update_init[16])) - 5;
+	*(DWORD*)(&(static_laser_update_init[2])) = (DWORD)static_laser_update;
+	VirtualProtect(normal_laser_update_init, sizeof(static_laser_update_init), PAGE_EXECUTE_READWRITE, &oldP);
+
+}
+
+int _fastcall stageDM_update()
 {
 	DWORD ptrdm;
 	_asm {
@@ -122,11 +189,10 @@ int _fastcall stageDM()
 	d = (x - px) * (x - px) + (y - py) * (y - py);
 	d += 0.01f;
 	float vx, vy;
-	vx=*(float*)(ptrdm + 0xC44) += 14.0f*(px-x)/d;
-	vy=*(float*)(ptrdm + 0xC48) += 14.0f * (py - y) / d;
+	vx=*(float*)(ptrdm + 0xC44) += 13.0f*(px-x)/d;
+	vy=*(float*)(ptrdm + 0xC48) += 13.0f * (py - y) / d;
 	*(float*)(ptrdm + 0xC50) = sqrt(vx*vx+vy*vy);
 	*(float*)(ptrdm + 0xC54) = atan2(vy,vx);
-
 	return 0;
 }
 
@@ -292,7 +358,9 @@ void test_init()
 		{
 			*(BYTE*)i = opcode[j];
 		}
-		*(DWORD*)(0x00419387) = (DWORD)stageDM;
+		*(DWORD*)(0x00419387) = (DWORD)stageDM_update;
 	}//修改弹幕帧更新语句
 	curve_laser_update_init();
+	normal_laser_update_init();
+	static_laser_update_init();
 }
