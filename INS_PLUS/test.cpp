@@ -4,6 +4,31 @@
 
 #define player_x (*(float*)(*(DWORD*)(0x004E9BB8) + 0x618))
 #define player_y (*(float*)(*(DWORD*)(0x004E9BB8) + 0x61C))
+int get_rnd_int()
+{
+	int(*rnd)(int)=(int(*)(int))0x004036A0;
+	return rnd(0x004E9A48);
+}
+
+void _fastcall dm_shooter_override(DWORD ptr_this, DWORD dm_num)
+{
+	/*0042BC60:ins601
+	edx = arg[0]
+	ecx=edi
+	edi + (edx * 0x380) + 0x598 : type
+	edi + (edx * 0x380) + 0x59C : color
+	edi + (edx * 0xC) + 0x3DD8 : offset_pos
+	edi + (edx * 0x380) + 0x5AC : angle[2]
+	edi + (edx * 0x380) + 0x5B4 : speed[2]
+	edi + (edx * 0x380) + 0x8FC : way(WORD)
+	edi + (edx * 0x380) + 0x8FE : layer(WORD)
+	edi + (edx * 0x380) + 0x900 : method_shoot
+	004036A0(0x004E9A48) get a rnd DWORD
+	*/
+	DWORD pt_dm=dm_num*0x380+ptr_this;
+	*(float*)(pt_dm + 0x5AC) = (float)1;
+
+}
 
 void _fastcall static_laser_update(DWORD ptr_this)
 {
@@ -311,6 +336,45 @@ int _fastcall playerDm_flag4(int ptr_char_a1, int float_a2, int a3, int a4, int 
 	return *(int*)(&ret_flag2);
 }
 
+void dm_shooter_init()
+{
+	/*
+	newmem:
+	pushad
+	mov ecx,edi
+	mov eax,0x12345678
+	call eax
+	popad
+	
+	originalcode:
+	lea ecx,[edx+edx*2]
+	movss xmm0,[edi+ecx*4+00003EA0]
+*/
+	
+	BYTE* dm_shooter_over = new BYTE[12]{
+	0xE9,
+	0x90,0x43,0x58,0x00,
+	0x90,0x90,0x90,0x90,0x90,0x90,0x90 };
+	BYTE* dm_shooter = new BYTE[28]{ 
+	0x60,0x8B,0xCF,0xB8,
+	0x78,0x56,0x34,0x12
+	,0xFF,0xD0,0x61,0x8D,0x0C,0x52,0xF3,0x0F,0x10,0x84,0x8F,0xA0,0x3E,0x00,0x00,
+	0xE9,
+	0x5B,0xBC,0xA7,0xFF };
+	DWORD oldP;
+	DWORD jmp_sourse_address=0x0042BC6B;
+	DWORD jmp_return_address=0x0042BC76;
+	*(DWORD*)(&(dm_shooter_over[1])) = (DWORD)(&(dm_shooter[0])) - jmp_sourse_address - 5;;
+
+	for (DWORD i = 0; i < 12; i++)
+	{
+		*(BYTE*)(jmp_sourse_address + i) = dm_shooter_over[i];
+	}
+	*(DWORD*)(&(dm_shooter[24])) = jmp_return_address - ((DWORD) & (dm_shooter[24])) - 5;
+	*(DWORD*)(&(dm_shooter[4])) = (DWORD)dm_shooter_override;
+	VirtualProtect(dm_shooter, sizeof(dm_shooter), PAGE_EXECUTE_READWRITE, &oldP);
+}
+
 void test_init()
 {
 	{
@@ -363,4 +427,5 @@ void test_init()
 	curve_laser_update_init();
 	normal_laser_update_init();
 	static_laser_update_init();
+	dm_shooter_init();
 }

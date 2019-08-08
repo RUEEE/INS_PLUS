@@ -8,8 +8,10 @@ int _fastcall stageDM_update();
 void _fastcall curve_laser_update(DWORD ptr_this);
 void _fastcall normal_laser_update(DWORD ptr_this);
 void _fastcall static_laser_update(DWORD ptr_this);
+void _fastcall dm_shooter_override(DWORD dm_num, DWORD ptr_this);
 
 void curve_laser_update_init();
 void static_laser_update_init();
 void normal_laser_update_init();
 void test_init();
+void dm_shooter_init();
